@@ -28,8 +28,23 @@ const server = http.createServer(async (request, response) => {
 
   if (requestedPath === "/") requestedPath = "/index.html";
 
+  const isAllowedFile = ["/index.html", "/styles.css", "/app.js"].includes(requestedPath)
+    || requestedPath.startsWith("/assets/");
+  if (!isAllowedFile) {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Arquivo não encontrado.");
+    return;
+  }
+
   const filePath = path.resolve(__dirname, `.${requestedPath}`);
   const relativePath = path.relative(__dirname, filePath);
+  const assetRelativePath = path.relative(path.join(__dirname, "assets"), filePath);
+  if (requestedPath.startsWith("/assets/")
+    && (assetRelativePath === ".." || assetRelativePath.startsWith(`..${path.sep}`) || path.isAbsolute(assetRelativePath))) {
+    response.writeHead(403);
+    response.end("Acesso negado.");
+    return;
+  }
   if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     response.writeHead(403);
     response.end("Acesso negado.");
