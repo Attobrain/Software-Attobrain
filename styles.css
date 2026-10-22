@@ -436,3 +436,7 @@ button { cursor: pointer; }
   .monitor-card { min-height: 185px; }
   .summary-panel dl { grid-template-columns: 62px 1fr; }
 }
+
+.mouse-maze { display: block; width: 100%; max-width: 620px; margin: auto; aspect-ratio: 1; touch-action: none; }
+#capture-status { padding: 12px; background: #f2efff; border-radius: 8px; }
+#capture-values { font-size: 13px; line-height: 1.7; margin: 15px 0; }

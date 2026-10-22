@@ -326,7 +326,7 @@ function renderPrepare() {
           <ol>
             <li>Identifique o ponto de partida.</li>
             <li>Siga mentalmente o trajeto até a chegada.</li>
-            <li>Use o cursor ou as setas do teclado para mover o marcador.</li>
+            <li>Clique no início e siga os corredores com o mouse.</li>
           </ol>
           <div class="important-note"><strong>Importante</strong>Olhar fora da tela não comprova desatenção. Esta versão não mede foco.</div>
         </aside>
@@ -353,6 +353,7 @@ function mazeSvg(session) {
 }
 
 function renderMaze() {
+  if (readSession()?.maze) return renderMouseMaze(readSession());
   const session = readSession();
   if (!session) return renderPrepare();
 
@@ -430,6 +431,7 @@ function timeline(title, variant = "monitor") {
 }
 
 function renderMonitor() {
+  if (readSession()?.maze) return renderMouseReport(readSession());
   const session = readSession();
   if (!session) return renderPrepare();
   const student = readStudents().find((item) => item.id === session.studentId);
@@ -490,6 +492,7 @@ function renderMonitor() {
 }
 
 function renderResult() {
+  if (readSession()?.maze) return renderMouseReport(readSession());
   const session = readSession();
   if (!session) return renderPrepare();
   const student = readStudents().find((item) => item.id === session.studentId);
@@ -532,6 +535,7 @@ function renderResult() {
 }
 
 function render() {
+  stopMouseCapture();
   clearInterval(monitorTimer);
   monitorTimer = null;
   const { page, id } = routeParts();
@@ -549,6 +553,7 @@ function render() {
     default: app.innerHTML = renderOverview();
   }
 
+  if (page === "maze") bindMouseMaze();
   if (page === "monitor") {
     monitorTimer = setInterval(() => {
       document.querySelectorAll("[data-session-time]").forEach((element) => {
@@ -571,7 +576,7 @@ function canMove(from, to) {
 
 function movePlayer(direction) {
   const session = readSession();
-  if (!session || session.endedAt) return;
+  if (!session || session.endedAt || session.maze) return;
   const move = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[direction];
   if (!move) return;
 
@@ -608,7 +613,9 @@ function startNewSession(form) {
   saveSession({
     studentId: selectedStudent.id,
     activity: String(formData.get("activity") || "Labirinto visual • Nível inicial"),
-    startedAt: Date.now(),
+    maze: generateMaze(String(formData.get("activity")).includes("intermediário") ? 10 : 7, String(formData.get("activity")).includes("intermediário") ? 10 : 7),
+    samples: [], visitedCells: [], wallContacts: 0,
+    startedAt: null,
     endedAt: null,
     moves: 0,
     completed: false,
@@ -618,6 +625,7 @@ function startNewSession(form) {
 }
 
 function finishMaze() {
+  stopMouseCapture();
   const session = readSession();
   if (!session) return go("prepare");
   session.endedAt = Date.now();
@@ -644,6 +652,7 @@ app.addEventListener("click", (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const { action, id } = button.dataset;
+  if (action === "export-simulation") exportSimulation();
 
   if (action === "edit") go(`edit/${encodeURIComponent(id)}`);
   if (action === "delete") go(`delete/${encodeURIComponent(id)}`);

@@ -28,7 +28,7 @@ const server = http.createServer(async (request, response) => {
 
   if (requestedPath === "/") requestedPath = "/index.html";
 
-  const isAllowedFile = ["/index.html", "/styles.css", "/app.js"].includes(requestedPath)
+  const isAllowedFile = ["/index.html", "/styles.css", "/app.js", "/maze.js"].includes(requestedPath)
     || requestedPath.startsWith("/assets/");
   if (!isAllowedFile) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
