@@ -1,0 +1,10 @@
+{
+  "name": "attobrain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site Hello World em Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
