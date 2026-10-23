@@ -7,6 +7,8 @@ import { bindControls } from "./public/modules/controls.js";
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
   socket = io();
+// A reused student window must re-associate when a new session link changes its fragment.
+if (student) window.addEventListener("hashchange", () => location.reload());
 let credentials,
   state = null,
   trail = [],
