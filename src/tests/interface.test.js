@@ -76,3 +76,18 @@ test("mensagens do aluno são neutras e não expõem dados profissionais", async
   assert(shell.includes('id="fullscreen"'));
   assert(!/id="(metrics|eeg|results|notes)"/.test(shell));
 });
+
+ test("sons do aluno acompanham transições sem repetir snapshots ou reconexões", async () => {
+  const { studentCue } = await import("../../public/modules/student-effects.js");
+  const ready = { runId: "one", state: "READY" };
+  const running = { ...ready, state: "RUNNING" };
+  assert.equal(studentCue(running, ready), "start");
+  assert.equal(studentCue(running, running), null);
+  assert.equal(studentCue(running, null), null);
+  assert.equal(studentCue(running, { ...ready, disconnected: true }), null);
+  assert.equal(studentCue({ ...running, disconnected: true }, ready), null);
+  assert.equal(studentCue({ ...running, runId: "two" }, ready), null);
+  for (const [state, cue] of [["PAUSED","pause"],["COMPLETED","complete"],["TIMED_OUT","finish"],["ABORTED","finish"]]) {
+    assert.equal(studentCue({ ...running, state }, running), cue);
+  }
+ });

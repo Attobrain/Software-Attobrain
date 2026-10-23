@@ -1,7 +1,7 @@
 export function drawBoard(
   canvas,
   state,
-  { trail = [], metrics = null, marker = null } = {},
+  { trail = [], metrics = null, marker = null, studentTheme = false } = {},
 ) {
   if (!canvas) return;
   const c = canvas.getContext("2d"),
@@ -10,7 +10,7 @@ export function drawBoard(
   if (!state?.maze) return;
   c.fillStyle = "#fff";
   c.fillRect(0, 0, size, size);
-  c.strokeStyle = "#4b526d";
+  c.strokeStyle = studentTheme ? "#7461ad" : "#4b526d";
   c.lineWidth = 4;
   c.lineCap = "round";
   for (const [x, y, a, b] of state.walls) {

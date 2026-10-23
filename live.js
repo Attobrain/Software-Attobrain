@@ -1,3 +1,4 @@
+import { createStudentEffects } from "./public/modules/student-effects.js";
 import { createPlatform } from "./public/modules/platform.js";
 import { professionalLayout } from "./public/modules/layout.js";
 import { text, number, time, labels } from "./public/modules/format.js";
@@ -36,6 +37,7 @@ try {
 }
 document.body.classList.add(student ? "student-app" : "professional-app");
 root.innerHTML = student ? studentShell() : professionalLayout();
+const studentEffects = student ? createStudentEffects(document.getElementById("student-sound")) : null;
 const message = (value) => {
   if (student) {
     const p = document.createElement("p");
@@ -82,6 +84,7 @@ socket.on("disconnect", () => {
   if (student) {
     const previous = state;
     state = { ...state, disconnected: true };
+    studentEffects?.update(state, previous);
     renderStudent(state, previous);
   }
 });
@@ -173,6 +176,7 @@ socket.on("snapshot", (incoming) => {
     platform?.isImported() ? "Arquivo importado · sessão ao vivo preservada" : `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
   );
   if (student) {
+    studentEffects?.update(state, previous);
     renderStudent(state, previous);
     return;
   }
@@ -318,6 +322,7 @@ function render(now) {
   if (document.getElementById("board")?.checkVisibility()) drawBoard(document.getElementById("board"), state, {
     trail: !student && document.getElementById("trail").checked ? trail : [],
     metrics: student ? null : state.metrics,
+    studentTheme: student,
   });
   if (student || now - lastRender < 100) return;
   lastRender = now;

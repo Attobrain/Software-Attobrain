@@ -175,3 +175,56 @@
     transform: translateY(-5px);
   }
 }
+/* Student palette: expressive outside the board, quiet along the path. */
+.live-app.student-app { background: radial-gradient(ellipse at 8% 15%, #e1faf2 0, transparent 45%), radial-gradient(ellipse at 95% 80%, #eae0ff 0, transparent 48%), #f6f4ff; }
+.live-app .student-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.live-app .student-actions button { min-height:44px; border-radius:14px; transition:background 180ms ease, box-shadow 180ms ease; }
+.live-app #student-sound { color:#56339e; background:#eee7fc; border-color:#d7c6f5; }
+.live-app #student-sound[aria-pressed="true"] { color:#fff; background:#6941c6; }
+.live-app .student-actions button:hover { box-shadow:0 4px 12px #6941c61a; }
+.live-app .student-actions button:focus-visible { outline:3px solid #087f73; outline-offset:4px; }
+.live-app #student-view { position:relative; isolation:isolate; overflow:hidden; border:1px solid #ded3f3; border-top:5px solid #8d6cda; background:linear-gradient(145deg,#fff 45%,#f8f4ff); box-shadow:0 20px 70px #6941c610; }
+.live-app .student-welcome { position:relative; min-height:min(650px,76vh); animation:student-enter 200ms ease-out; }
+.live-app .student-logo-halo { position:relative; width:150px; height:150px; background:linear-gradient(140deg,#dbf8ee,#ede2ff); box-shadow:0 0 0 13px #f4effc,0 0 0 26px #faf7ff; margin-bottom:42px; }
+.live-app .student-logo-halo img { animation:welcome-breathe 4s ease-in-out 3; }
+.live-app .student-welcome h1 { color:#35205f; font-weight:800; letter-spacing:-.035em; }
+.live-app .student-welcome .eyebrow { color:#087466; font-weight:800; }
+.live-app .waiting-state { background:#ece5fa; color:#56378d; padding:13px 18px; }
+.live-app .student-guide { gap:12px; border:0; margin-top:34px; padding-top:0; }
+.live-app .student-guide > span { padding:14px 16px; border:1px solid #d6eee6; border-radius:16px; background:#effaf5; color:#225e50; }
+.live-app .student-guide > span:nth-child(2) { background:#fff5e5; border-color:#f3dfba; color:#805313; }
+.live-app .student-guide > span:nth-child(3) { background:#f1eafa; border-color:#e1d4f2; color:#623ba0; }
+.live-app .student-guide b { color:inherit; display:grid; place-items:center; width:27px; height:27px; border-radius:9px; background:#ffffffb3; }
+.live-app .student-orbit { position:absolute; inset:0; pointer-events:none; z-index:-1; }
+.live-app .student-orbit i { position:absolute; left:9%; top:18%; width:52px; height:52px; border:12px solid #b9eadc; border-radius:50%; transform:rotate(-15deg); animation:student-float 5s ease-in-out 3; }
+.live-app .student-orbit i:nth-child(2) { left:auto; right:9%; top:45%; width:32px; height:32px; border:0; border-radius:10px; background:#f6d39e; animation-delay:.4s; }
+.live-app .student-orbit i:nth-child(3) { left:17%; top:72%; width:18px; height:18px; border:0; background:#d6c3f5; animation-delay:.8s; }
+.live-app #student-view[data-mood="rest"] { border-top-color:#e7ac54; }
+.live-app #student-view[data-mood="complete"] { border-top-color:#28a98c; }
+.live-app #student-view[data-mood="complete"] .student-logo-halo { animation:student-arrive 550ms ease-out; }
+.live-app .student-task-heading .task-stage { border-radius:999px; padding:10px 15px; color:#56339e; background:#eee6fb; }
+.live-app .student-state { color:#087466; background:#eaf8f2; padding:9px 13px; border-radius:999px; }
+.live-app #student-view.is-playing h1 { color:#42286d; letter-spacing:-.035em; }
+.live-app .student-board-wrap { border:2px solid #d8c8ef; border-radius:22px; background:linear-gradient(135deg,#ecfaf3,#eee5fc); box-shadow:0 8px 26px #6941c610; }
+.live-app .student-board-wrap canvas { display:block; border-radius:10px; background:#fff; }
+.live-app .student-legend > span { padding:9px 13px; border-radius:12px; background:#eff9f5; color:#246353; }
+.live-app .student-legend > span:last-child { background:#f0eafa; color:#603d98; }
+@keyframes student-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes student-float { 50% { transform:translateY(-9px) rotate(8deg); } }
+@keyframes student-arrive { from { transform:scale(.9); opacity:.5; } to { transform:scale(1); opacity:1; } }
+@media(max-width:600px) {
+ .live-app .student-toolbar { flex-wrap:wrap; gap:16px; }
+ .live-app .student-actions { width:100%; justify-content:stretch; }
+ .live-app .student-actions button { flex:1; }
+ .live-app .student-guide { flex-direction:column; width:100%; max-width:285px; }
+ .live-app .student-welcome { min-height:0; padding:32px 0 8px; }
+ .live-app .student-orbit i { left:0; width:28px; height:28px; border-width:7px; }
+ .live-app .student-orbit i:nth-child(2) { right:0; }
+ .live-app .student-task-heading { gap:8px; flex-wrap:wrap; }
+ .live-app .student-legend { gap:10px; font-size:11px; }
+ .live-app .student-legend > span { padding:8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .live-app .student-welcome, .live-app .student-logo-halo, .live-app .student-logo-halo img, .live-app .student-orbit i { animation:none !important; }
+ .live-app .student-actions button { transition:none; }
+}

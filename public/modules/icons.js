@@ -1,4 +1,5 @@
 const paths = {
+  sound: '<path d="m11 5-6 4H2v6h3l6 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
   activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   target:
