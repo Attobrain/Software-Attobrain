@@ -1,0 +1,5 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {generateMaze,geometry,move,solution}=require('./engine');
+test('geração reproduzível e caminho válido nos dois níveis',()=>{for(const n of [7,10]){const m=generateMaze(n,n,42);assert.deepEqual(m,generateMaze(n,n,42));assert.equal(solution(m).at(-1),n*n-1);}});
+test('indicador com raio não atravessa parede nem em movimento rápido',()=>{const r=move({x:.2,y:.5},{x:.9,y:.5},10,[[.5,0,.5,1]]);assert(r.position.x<.488);assert(r.hits.length);});
+test('corredor livre limita velocidade e permite deslocamento',()=>{let r=move({x:.1,y:.1},{x:.9,y:.1},1,[]);assert(Math.abs(r.position.x-.35)<1e-8);});
+test('solução completa percorre corredores respeitando colisões',()=>{const m=generateMaze(7,7,42),walls=geometry(m);let p={x:.5/7,y:.5/7};for(const cell of solution(m).slice(1)){const target={x:(cell%7+.5)/7,y:(Math.floor(cell/7)+.5)/7};for(let i=0;i<100;i++)p=move(p,target,1/60,walls).position;assert(Math.hypot(p.x-target.x,p.y-target.y)<.001);}assert(p.x>.9&&p.y>.9);});

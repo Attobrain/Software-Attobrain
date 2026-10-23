@@ -8,6 +8,7 @@ const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".svg": "image/svg+xml",
+  ".png": "image/png",
 };
 
 const server = http.createServer(async (request, response) => {
@@ -26,9 +27,10 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  if (requestedPath === "/") requestedPath = "/index.html";
+  if (["/", "/profissional", "/aluno"].includes(requestedPath)) requestedPath = "/live.html";
+  if(requestedPath === "/legado") requestedPath = "/index.html";
 
-  const isAllowedFile = ["/index.html", "/styles.css", "/app.js", "/maze.js"].includes(requestedPath)
+  const isAllowedFile = ["/navigation.js", "/live.html", "/live.js", "/live.css", "/index.html", "/styles.css", "/app.js", "/maze.js"].includes(requestedPath)
     || requestedPath.startsWith("/assets/");
   if (!isAllowedFile) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
@@ -65,6 +67,9 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
+const { Server } = require("socket.io");
+const io = new Server(server, {maxHttpBufferSize: 16384});
+require("./realtime").attach(io);
 server.listen(port, () => {
   console.log(`Attobrain está no ar: http://localhost:${port}`);
 });

@@ -553,6 +553,7 @@ function render() {
     default: app.innerHTML = renderOverview();
   }
 
+  window.initAttobrainNavigation?.();
   if (page === "maze") bindMouseMaze();
   if (page === "monitor") {
     monitorTimer = setInterval(() => {

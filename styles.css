@@ -440,3 +440,25 @@ button { cursor: pointer; }
 .mouse-maze { display: block; width: 100%; max-width: 620px; margin: auto; aspect-ratio: 1; touch-action: none; }
 #capture-status { padding: 12px; background: #f2efff; border-radius: 8px; }
 #capture-values { font-size: 13px; line-height: 1.7; margin: 15px 0; }
+/* Navegação lateral compartilhada: aberta no desktop, sobreposta em telas menores. */
+body .sidebar { position: fixed; inset: 0 auto 0 0; width: 260px; height: 100dvh; z-index: 30; display: flex; transform: translateX(-100%); transition: transform 220ms ease; box-shadow: 8px 0 30px rgb(15 23 42 / 8%); }
+body.menu-open .sidebar { transform: translateX(0); }
+body .workspace { margin-left: 0; transition: margin-left 220ms ease; }
+body.menu-open .workspace { margin-left: 260px; }
+body .sidebar .brand { height: 112px; flex-basis: 112px; padding: 36px 22px 14px; }
+body .sidebar .brand-logo-window { transform: none; width: 196px; }
+body .sidebar .brand small { margin-top: 6px; }
+body .sidebar .side-nav { display: block; padding: 18px 12px; overflow-y: auto; }
+body .sidebar .nav-link { width: 100%; min-width: 0; justify-content: flex-start; gap: 14px; padding: 12px; font-size: 13px; }
+body .sidebar .nav-link img { display: inline-block; width: 22px; height: 22px; }
+.menu-toggle, .menu-close { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; background: white; color: var(--indigo); cursor: pointer; font: inherit; font-size: 13px; }
+.menu-toggle > span:first-child { font-size: 20px; }
+.menu-close { position: absolute; top: 5px; right: 10px; width: 28px; min-height: 28px; padding: 0; border: none; color: white; background: transparent; font-size: 24px; }
+.menu-footer { margin-top: auto; padding: 22px; color: rgb(255 255 255 / 70%); font-size: 11px; border-top: 1px solid rgb(255 255 255 / 18%); }
+.menu-overlay { display: none; }
+.topbar .crumb { margin-right: auto; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+[id] { scroll-margin-top: 100px; }
+@media(max-width:1000px) { body.menu-open .workspace { margin-left: 0; } body.menu-open .menu-overlay { display: block; position: fixed; inset: 0; z-index: 25; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0; background: rgb(15 23 42 / 40%); } body.menu-open { overflow: hidden; } }
+@media(max-width:760px) { .menu-toggle-label { display: none; } .menu-toggle { padding: 8px 10px; } body .topbar { gap: 10px; } }
+@media(prefers-reduced-motion:reduce) { body .sidebar, body .workspace { transition: none; } }
