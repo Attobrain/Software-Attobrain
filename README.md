@@ -1,40 +1,58 @@
-# Attobrain — MVP do labirinto
+# Attobrain — MVP multimodal do labirinto
 
-Projeto Integrador da Fatec. Duas interfaces em HTML, CSS e JavaScript puro, servidor Node.js e Socket.IO. O mouse representa um alvo de direcionamento; o servidor move o indicador com velocidade limitada e colisões. Sem banco de dados ou aquisição de sensores.
+HTML/CSS/JavaScript, Node.js e Socket.IO. Duas telas independentes, protocolo de treinamento + A/B/C, métricas observadas e EEG inteiramente sintético. Sem banco de dados, calibração, sensores reais ou classificação clínica. O cadastro legado não foi ampliado.
 
 ## Executar
 
-Instale Node.js, execute `npm install` e depois `npm start`. Abra http://localhost:3000/profissional. Testes: `npm test`.
+Requer Node.js 22 ou superior. Na pasta do projeto:
 
-1. Abra a tela do aluno pelo painel; mantenha as duas janelas visíveis.
-2. Escolha nível e semente (42 é o percurso fixo padrão), prepare e inicie.
-3. Na janela do aluno, mova o mouse pelos corredores. O profissional acompanha e pode pausar, retomar ou encerrar.
-4. O objetivo violeta conclui a atividade automaticamente. Exporte JSON antes de criar outra atividade.
+```sh
+npm ci
+npm start
+```
 
-Em dois monitores, mova manualmente a janela do aluno para o segundo monitor e clique em Tela cheia. Em um monitor, use janelas lado a lado: ocultar a tela do aluno pausa a atividade. Um computador tem apenas um ponteiro compartilhado; dois dispositivos permitem mouses independentes.
+Abra http://localhost:3000/profissional. Configure modo, nível, tempos e EEG e clique **Preparar sessão**. O protocolo congela os parâmetros. Abra **Tela do aluno** (janela) ou **Abrir aluno em aba**. Em dois monitores, mova a janela do aluno para o segundo monitor e use Tela cheia. Mantenha a tela do aluno visível: ocultá-la pausa a atividade.
 
-Em rede local, abra `http://IP-DO-SERVIDOR:3000/profissional` no computador do profissional. Copie o link do aluno para o outro dispositivo. Se o link contiver localhost, substitua por esse IP. Os dispositivos precisam alcançar a porta 3000; configurações de firewall dependem do computador. Não exponha o servidor à internet. As credenciais temporárias distinguem os papéis, sem equivaler a autenticação clínica. Apenas um cliente de cada papel pode controlar a sessão.
+Inicie o treino pelo profissional e mova o mouse pelos corredores na tela do aluno. Após concluir, encerrar ou atingir o limite, consulte o resultado e avance explicitamente. Entre A/B e B/C há uma pausa mínima de 30–45 segundos. Treinos podem ser repetidos até sete tentativas e nunca entram nos agregados. Avaliações não podem ser substituídas. Encerrar sessão preserva um consolidado parcial; não preenche atividades não realizadas. Atividade única permite exploração com semente livre.
 
-## Organização
+Em dois dispositivos na mesma rede, acesse `http://IP-DO-SERVIDOR:3000/profissional` e copie o link do aluno. Se necessário, substitua localhost pelo IP do servidor. Os dispositivos precisam alcançar a porta 3000. O software não altera firewall. Credenciais temporárias distinguem papéis, sem autenticação institucional. Não publicar diretamente na internet.
 
-`index.js` serve as páginas e conecta Socket.IO; `realtime.js` gerencia sessões, estados, eventos e métricas; `engine.js` contém geração reproduzível, geometria e colisões; `live.js` contém as duas interfaces e captura do mouse. O fluxo antigo fica em `/legado#students`, fora do fluxo principal.
+## Dados e resultados
 
-Estados: IDLE, READY, RUNNING, PAUSED, COMPLETED e ABORTED. Desconexão, tela do aluno oculta ou ausência de entrada por dois segundos pausam. Retomada exige comando do profissional. Entrada antiga por mais de 500 ms não movimenta o indicador. O relógio monotônico do servidor conta somente execução. Um limite operacional de dez minutos provoca pausa.
+O servidor limita velocidade, considera raio e paredes e registra o indicador aceito separadamente do alvo do mouse. Métricas incluem tempo ativo/pausado, checkpoints, distâncias contínua e no grafo, eficiência, velocidade/DP/CV, contatos, recuperação censurada, baixa movimentação, retrocessos e direção. Resultados individuais são congelados. Tendências A/B/C exigem três conclusões comparáveis; comparações parciais e dados insuficientes são identificados.
 
-## Métricas
+EEG sintético: 1/4/8 canais V1–V8, 250/500 Hz, semente independente, oscilações e ruído determinísticos, artefatos programados e modo interativo didático. Um worker gera blocos por índice; a análise usa Welch/Hann de oito segundos com FFT, PSD unilateral e bandas delta/theta/alpha/beta/gamma baixa. O gráfico usa envelope por pixel. Não há índices de atenção ou interpretação clínica. A área técnica mostra todos os canais, PSD, bandas, buffers, artefatos e conexões.
 
-- Tempo ativo: soma dos passos do motor enquanto RUNNING; pausas ficam separadas.
-- Progresso: marcos das células da solução única atingidos em ordem. A chegada exige o indicador próximo ao centro do destino.
-- Contatos: parede bloqueia o círculo; novo contato com a mesma parede somente após intervalo de 200 ms sem bloqueio.
-- Pouca movimentação: distância menor que 0,01 largura em janela de dois segundos ativos; janelas consecutivas são unidas. Não representa desatenção.
-- Distância: soma dos movimentos aceitos, em larguras do quadro.
+**EEG SINTÉTICO — não representa a atividade cerebral do participante.**
 
-Coordenadas normalizadas de 0 a 1. Velocidade máxima 0,25 largura/s, raio 0,01, espessura de parede 0,005. Motor nominal 60 passos/s, transmissão nominal 20 estados/s, desenho com requestAnimationFrame. Valores são escolhas de engenharia. Interrupções longas do processo não são contadas como execução: o passo é limitado a 50 ms.
+**MODULAÇÃO DIDÁTICA — sem equivalência fisiológica** no modo interativo. Contatos produzem uma rajada artificial de um segundo, associada ao evento de origem.
 
-JSON inclui eventos completos ordenados, entrada do mouse separada da trajetória, configurações, semente, geometria, observações e resultados. Os eventos visíveis no painel são limitados aos recentes. Todos os dados da nova sessão são temporários, mantidos em memória; reinício da atividade ou do servidor os descarta. Cadastros antigos continuam no armazenamento local do navegador.
+Exporte JSON antes de reiniciar ou fechar. Máximo de quatro sessões em memória, 30 minutos de duração total, remoção após 30 minutos sem conexão. Não há persistência no servidor. JSON v2 contém manifesto, parâmetros/versionamento, registros brutos, métricas, regras, eventos, notas e amostras sintéticas; omite credenciais. Download é autenticado por Bearer no cabeçalho e transmitido em partes. A inspeção temporal busca somente a janela EEG necessária. A importação v2 é somente leitura; formatos anteriores são rejeitados com explicação. Importações têm limite de 512 MiB e dependem da memória do navegador. Reprodução animada avançada permanece P2.
 
-## Limitações e validação
+## Arquitetura
 
-Os testes automatizados cobrem geração reproduzível, caminho completo, velocidade, colisão considerando raio, permissões, associação, estados, exclusão das pausas, reconexão, exportação e reinício. Testar fisicamente dois dispositivos depende de equipamentos e rede disponíveis.
+- `src/domain`: sessão, relógio monotônico, protocolo, conjuntos versionados, métricas puras e projeções por papel.
+- `src/controllers`: autorização, idempotência, limites de entrada/comandos e deltas Socket.IO.
+- `src/repositories`: retenção de sessões em memória.
+- `src/services`: worker EEG, geração, Welch/FFT, exportação e inspeção.
+- `src/validators` e `src/types`: configuração validada e contratos dos provedores futuros.
+- `public/modules`: entrada, controles, desenho, gráficos, resultados e inspeção temporal.
+- `engine.js`: geometria, solução, movimento e subpassos de colisão.
+- `index.js` e `realtime.js`: pontos de entrada compatíveis.
 
-A área técnica tem uma onda ilustrativa sintética, sem relação com a interação, EEG humano ou métricas do jogo. Não há medição de olhos, atenção ou diagnóstico. A integração futura deve substituir o provedor de entrada e validar dados reais. A discussão científica anterior está em SIMULACAO.md; suas fórmulas pertencem à versão anterior e não são utilizadas no relatório atual.
+JavaScript preserva a execução direta sem compilador; contratos TypeScript documentam as fronteiras. Os arquivos legados app.js/maze.js e /legado continuam separados. SIMULACAO.md descreve a versão anterior, não as fórmulas atuais.
+
+## Testes e documentação
+
+```sh
+npm test
+npm run test:soak
+```
+
+Testes unitários e de integração abrangem protocolo completo e parcial, relógios/pausas, geometria, colisões, trajetórias conhecidas, métricas, regras, privacidade, reconexão, origem, idempotência, exportação/importação, worker e potência de sinais conhecidos. `test:soak` gera o equivalente a 30 minutos reais de amostras e janelas espectrais por taxa, em tempo acelerado; não é um ensaio de 30 minutos de rede ou UI.
+
+- [Plano consolidado](docs/PLANO-MVP.md)
+- [Protocolo, fórmulas e contratos](docs/PROTOCOLO.md)
+- [Relatório de entrega e limites dos testes](docs/ENTREGA-MVP.md)
+
+O projeto é um MVP local com capacidade limitada, sem garantia para 100.000 usuários. A identidade, persistência e escalabilidade distribuída precisam de arquitetura própria antes de produção.

@@ -1,3 +1,299 @@
-const {test}=require('node:test'),assert=require('node:assert/strict');const {createServer}=require('node:http');const {Server}=require('socket.io');const {io:client}=require('socket.io-client');const {attach}=require('./realtime');
-const delay=ms=>new Promise(r=>setTimeout(r,ms));
-test('duas telas: permissões, pausa, reconexão, exportação e reinício',async()=>{const http=createServer(),io=new Server(http),stop=attach(io);await new Promise(r=>http.listen(0,'127.0.0.1',r));let clients=[];function connect(){const c=client('http://127.0.0.1:'+http.address().port,{transports:['websocket']});clients.push(c);return c;}const ack=(c,type,data)=>new Promise(r=>c.emit(type,data,r));const p=connect();let snapshot;p.on('snapshot',s=>snapshot=s);try{const owner=await ack(p,'join',{create:true}),s=connect();const pupil=await ack(s,'join',{id:owner.id,key:owner.studentKey});assert.equal(pupil.role,'student');assert((await ack(s,'command',{id:owner.id,type:'prepare'})).error);const cmd=type=>ack(p,'command',{id:owner.id,type});assert((await cmd('start')).error);assert((await cmd('prepare')).ok);assert((await cmd('start')).ok);s.emit('input',{seq:1,inside:true,x:.07,y:.07});await delay(100);assert((await cmd('pause')).ok);await delay(80);let a=snapshot.active;await delay(100);assert.equal(snapshot.active,a);assert((await cmd('resume')).ok);s.disconnect();await delay(80);assert.equal(snapshot.state,'PAUSED');const again=connect();assert.equal((await ack(again,'join',{id:owner.id,key:owner.studentKey})).role,'student');assert((await cmd('resume')).ok);assert((await cmd('abort')).ok);const data=await new Promise(r=>p.emit('export',r));assert.equal(data.state,'ABORTED');assert(data.events.length);assert((await cmd('reset')).ok);await delay(60);assert.equal(snapshot.state,'IDLE');assert.equal(snapshot.active,0);}finally{clients.forEach(c=>c.disconnect());stop();await new Promise(r=>io.close(r));}});
+"use strict";
+const { test } = require("node:test"),
+  assert = require("node:assert/strict");
+const { io: client } = require("socket.io-client");
+const { randomUUID } = require("node:crypto");
+const { createApplication } = require("./index");
+const { SessionRepository } = require("./src/repositories/sessions");
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function request(socket, event, data) {
+  return new Promise((resolve, reject) =>
+    socket
+      .timeout(3000)
+      .emit(event, data, (error, value) =>
+        error ? reject(error) : resolve(value),
+      ),
+  );
+}
+async function setup(options = {}) {
+  const app = createApplication(options);
+  await new Promise((resolve) => app.server.listen(0, "127.0.0.1", resolve));
+  const url = `http://127.0.0.1:${app.server.address().port}`,
+    clients = [];
+  const connect = () => {
+    const socket = client(url, { transports: ["websocket"], forceNew: true });
+    clients.push(socket);
+    return socket;
+  };
+  return {
+    ...app,
+    url,
+    connect,
+    cleanup: async () => {
+      clients.forEach((c) => c.disconnect());
+      await app.close();
+    },
+  };
+}
+test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, exportação HTTP e parcial", async () => {
+  const app = await setup({ eeg: false }),
+    p = app.connect();
+  let professional, student;
+  p.on("snapshot", (s) => (professional = s));
+  try {
+    const owner = await request(p, "join", { create: true }),
+      s = app.connect();
+    s.on("snapshot", (v) => (student = v));
+    assert.equal(
+      (await request(s, "join", { id: owner.id, key: owner.studentKey })).role,
+      "student",
+    );
+    const command = (type, extra = {}) =>
+      request(p, "command", {
+        id: owner.id,
+        commandId: randomUUID(),
+        type,
+        ...extra,
+      });
+    assert(
+      (
+        await request(s, "command", {
+          id: owner.id,
+          commandId: randomUUID(),
+          type: "prepare",
+        })
+      ).error,
+    );
+    const id = randomUUID(),
+      prepare = { id: owner.id, commandId: id, type: "prepare", config: {} };
+    assert.equal((await request(p, "command", prepare)).ok, true);
+    assert.equal((await request(p, "command", prepare)).ok, true);
+    assert.equal(app.repository.sessions.get(owner.id).runs.length, 1);
+    assert.equal((await command("start")).ok, true);
+    let seq = 0;
+    const input = setInterval(
+      () =>
+        s.emit("input", {
+          runId: professional.runId,
+          seq: ++seq,
+          inside: true,
+          hidden: false,
+          x: 0.08,
+          y: 0.08,
+          clientTime: performance.now(),
+        }),
+      50,
+    );
+    await delay(250);
+    assert.equal(professional.full, false);
+    assert(!professional.maze);
+    assert(professional.active > 0);
+    assert.equal(student.metrics, undefined);
+    assert.equal(student.notes, undefined);
+    assert.equal(student.report, undefined);
+    assert.equal(
+      (await command("notes", { value: "Observação privada" })).ok,
+      true,
+    );
+    await delay(50);
+    assert(!JSON.stringify(student).includes("Observação privada"));
+    assert.equal((await command("pause")).ok, true);
+    const active = app.repository.sessions.get(owner.id).current.active;
+    await delay(100);
+    assert.equal(app.repository.sessions.get(owner.id).current.active, active);
+    assert.equal((await command("resume")).ok, true);
+    clearInterval(input);
+    s.disconnect();
+    await delay(80);
+    assert.equal(app.repository.sessions.get(owner.id).current.state, "PAUSED");
+    const again = app.connect();
+    assert.equal(
+      (await request(again, "join", { id: owner.id, key: owner.studentKey }))
+        .role,
+      "student",
+    );
+    assert.equal((await command("resume")).ok, true);
+    const current = app.repository.sessions.get(owner.id).current,
+      beforeInputs = current.inputs.length;
+    again.emit("input", {
+      runId: current.id,
+      seq: 1,
+      inside: true,
+      hidden: false,
+      x: 0.07,
+      y: 0.07,
+      clientTime: 1,
+    });
+    await delay(60);
+    assert.equal(current.inputs.length, beforeInputs + 1);
+    assert.equal((await command("abort")).ok, true);
+    assert.equal((await command("next")).ok, true);
+    assert.equal((await command("end-session")).ok, true);
+    const route = `${app.url}/api/sessions/${owner.id}/export`;
+    const inspectRoute = `${app.url}/api/sessions/${owner.id}/inspect?time=100`;
+    assert.equal((await fetch(inspectRoute)).status, 403);
+    const inspected = await (
+      await fetch(inspectRoute, {
+        headers: { Authorization: `Bearer ${owner.key}` },
+      })
+    ).json();
+    assert.equal(inspected.schemaVersion, 2);
+    assert.equal(inspected.runs[0].steps, undefined);
+    assert.equal((await fetch(route)).status, 403);
+    assert.equal(
+      (
+        await fetch(route, {
+          headers: { Authorization: `Bearer ${owner.studentKey}` },
+        })
+      ).status,
+      403,
+    );
+    const response = await fetch(route, {
+      headers: {
+        Authorization: `Bearer ${owner.key}`,
+        "X-Attobrain-Export": "true",
+      },
+    });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.schemaVersion, 2);
+    assert.equal(data.report.evaluations[1].state, "NOT_PERFORMED");
+    assert.equal(data.notes, "Observação privada");
+    assert(!JSON.stringify(data).includes(owner.key));
+    assert(!JSON.stringify(data).includes(owner.studentKey));
+    assert.equal(
+      app.repository.sessions.get(owner.id).exportedRevision,
+      app.repository.sessions.get(owner.id).revision,
+    );
+    p.emit(
+      "command",
+      { id: owner.id, type: "notes", commandId: "bad", value: 2 },
+      "callback inválido",
+    );
+    p.emit("join", null, "callback inválido");
+    await delay(20);
+    assert((await request(p, "ping-clock", { clientTime: 1 })).serverTime >= 0);
+  } finally {
+    await app.cleanup();
+  }
+});
+test("HTTP estático protegido, módulos ES, origem e limite de sessões", async () => {
+  const app = await setup({ eeg: false });
+  try {
+    for (const route of [
+      "/profissional",
+      "/aluno",
+      "/legado",
+      "/live.js",
+      "/public/modules/layout.js",
+    ])
+      assert.equal((await fetch(app.url + route)).status, 200);
+    assert.equal((await fetch(app.url + "/package.json")).status, 404);
+    assert.equal(
+      (await fetch(app.url + "/assets/%2e%2e%5cpackage.json")).status,
+      403,
+    );
+    assert.equal(
+      (await fetch(app.url + "/profissional", { method: "POST" })).status,
+      405,
+    );
+    assert(
+      (await fetch(app.url + "/profissional")).headers.get(
+        "content-security-policy",
+      ),
+    );
+    const outsider = client(app.url, {
+      transports: ["websocket"],
+      extraHeaders: { Origin: "http://other.example" },
+      reconnection: false,
+    });
+    await new Promise((resolve) => outsider.on("connect_error", resolve));
+    outsider.disconnect();
+    for (let i = 0; i < 4; i++)
+      assert((await request(app.connect(), "join", { create: true })).id);
+    assert(
+      (await request(app.connect(), "join", { create: true })).error.includes(
+        "quatro",
+      ),
+    );
+  } finally {
+    await app.cleanup();
+  }
+});
+test("retenção em memória libera sessões sem conexão após 30 minutos", () => {
+  const repository = new SessionRepository();
+  const s = repository.create(0);
+  repository.sweep(1799999);
+  assert.equal(repository.sessions.size, 1);
+  repository.sweep(1800000);
+  assert.equal(repository.sessions.size, 0);
+  assert(s.id);
+});
+test("worker multicanal contínuo durante pausa; espectro e índices íntegros", async () => {
+  const app = await setup(),
+    p = app.connect();
+  let eegBlocks = 0,
+    spectral = false,
+    lastIndex = 0;
+  p.on("eeg", (b) => {
+    assert.equal(b.startIndex, lastIndex);
+    lastIndex += b.count;
+    assert.equal(b.channels.length, 8);
+    assert.equal(b.channels[0].length, b.count);
+    eegBlocks++;
+  });
+  p.on("spectrum", (s) => {
+    if (s.channels[0].valid) spectral = true;
+  });
+  try {
+    const owner = await request(p, "join", { create: true });
+    assert(
+      (
+        await request(p, "command", {
+          id: owner.id,
+          commandId: randomUUID(),
+          type: "prepare",
+          config: {},
+        })
+      ).ok,
+    );
+    const s = app.connect();
+    await request(s, "join", { id: owner.id, key: owner.studentKey });
+    await request(p, "command", {
+      id: owner.id,
+      commandId: randomUUID(),
+      type: "start",
+    });
+    await delay(150);
+    await request(p, "command", {
+      id: owner.id,
+      commandId: randomUUID(),
+      type: "pause",
+    });
+    const before = lastIndex;
+    await delay(8500);
+    assert(lastIndex > before + 1900);
+    assert(eegBlocks > 60);
+    assert(spectral);
+    const session = app.repository.sessions.get(owner.id);
+    assert.equal(session.eeg.gaps.length, 0);
+    assert.equal(session.current.state, "PAUSED");
+    await request(p, "command", {
+      id: owner.id,
+      commandId: randomUUID(),
+      type: "end-session",
+    });
+    const response = await fetch(`${app.url}/api/sessions/${owner.id}/export`, {
+      headers: { Authorization: `Bearer ${owner.key}` },
+    });
+    const data = await response.json();
+    assert.equal(
+      data.eeg.samples,
+      data.eeg.blocks.reduce((v, b) => v + b.count, 0),
+    );
+    assert(data.eeg.samples >= before + 1900);
+    assert.equal(data.runs[0].state, "ABORTED");
+  } finally {
+    await app.cleanup();
+  }
+});

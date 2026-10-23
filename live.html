@@ -1,19 +1,22 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Attobrain • Labirinto</title>
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/live.css">
-  <script src="/navigation.js" defer></script>
-  <script src="/socket.io/socket.io.js" defer></script>
-  <script src="/live.js" defer></script>
-</head>
-<body class="live-app">
-  <div class="workspace">
-    <header class="topbar"><div class="crumb">Attobrain / Labirinto visual</div><span class="soft-badge" id="connection">Conectando…</span></header>
-    <main id="root"></main>
-  </div>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Attobrain • Labirinto</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/live.css" />
+    <script src="/navigation.js" defer></script>
+    <script src="/socket.io/socket.io.js" defer></script>
+    <script src="/live.js" type="module"></script>
+  </head>
+  <body class="live-app">
+    <div class="workspace">
+      <header class="topbar">
+        <div class="crumb">Attobrain / Labirinto visual</div>
+        <span class="soft-badge" id="connection">Conectando…</span>
+      </header>
+      <main id="root"></main>
+    </div>
+  </body>
 </html>

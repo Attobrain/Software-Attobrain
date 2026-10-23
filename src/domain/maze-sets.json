@@ -1,0 +1,62 @@
+{
+  "7": {
+    "id": "operational-7-v1",
+    "version": 1,
+    "criteria": {
+      "length": 0.1,
+      "turns": 0.1,
+      "deadEnds": 0.15
+    },
+    "review": "Revisão geométrica automática; sem validação humana de dificuldade",
+    "candidates": [
+      {
+        "seed": 42,
+        "length": 2.5714285714285716,
+        "turns": 11,
+        "deadEnds": 8
+      },
+      {
+        "seed": 70,
+        "length": 2.5714285714285716,
+        "turns": 11,
+        "deadEnds": 7
+      },
+      {
+        "seed": 81,
+        "length": 2.5714285714285716,
+        "turns": 11,
+        "deadEnds": 7
+      }
+    ]
+  },
+  "10": {
+    "id": "operational-10-v1",
+    "version": 1,
+    "criteria": {
+      "length": 0.1,
+      "turns": 0.1,
+      "deadEnds": 0.15
+    },
+    "review": "Revisão geométrica automática; sem validação humana de dificuldade",
+    "candidates": [
+      {
+        "seed": 42,
+        "length": 5.4,
+        "turns": 34,
+        "deadEnds": 14
+      },
+      {
+        "seed": 66,
+        "length": 5,
+        "turns": 35,
+        "deadEnds": 13
+      },
+      {
+        "seed": 87,
+        "length": 5.4,
+        "turns": 35,
+        "deadEnds": 13
+      }
+    ]
+  }
+}
