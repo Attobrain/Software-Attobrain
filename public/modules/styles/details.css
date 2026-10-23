@@ -1,0 +1,147 @@
+/* Progressive disclosure keeps configuration and research details out of live monitoring. */
+.live-app .setup-panel,
+.live-app .detail-panel,
+.live-app #results,
+.live-app #timeline,
+.live-app #diagnostics {
+  margin-top: 20px;
+}
+.live-app .setup-panel > summary,
+.live-app .detail-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  list-style: none;
+}
+.live-app .setup-panel > summary::-webkit-details-marker,
+.live-app .detail-panel > summary::-webkit-details-marker {
+  display: none;
+}
+.live-app .summary-hint {
+  color: #627088;
+  font-size: 11px;
+  text-align: right;
+}
+.live-app .summary-hint:after {
+  content: "+";
+  display: inline-block;
+  margin-left: 14px;
+  font-size: 18px;
+  color: #6941c6;
+}
+.live-app details[open] > summary .summary-hint:after {
+  content: "−";
+}
+.live-app .setup-content,
+.live-app .detail-content {
+  padding-top: 24px;
+}
+.live-app .setup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.live-app .setup .parameters {
+  grid-column: 1/-1;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.live-app .parameters .setup {
+  padding-top: 16px;
+}
+.live-app #prepare {
+  align-self: end;
+}
+.live-app #student-link {
+  font-size: 12px;
+  margin-left: 6px;
+}
+.live-app .panel-caption {
+  margin: 14px 0 0;
+  color: #627088;
+  font-size: 11px;
+}
+.live-app #results h2,
+.live-app #timeline h2 {
+  margin-bottom: 12px;
+}
+.live-app #results > p,
+.live-app #timeline > p {
+  color: #526078;
+  font-size: 12px;
+}
+.live-app #results > label {
+  margin-top: 22px;
+}
+.live-app #results details {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.live-app .result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.live-app .result-table th,
+.live-app .result-table td {
+  text-align: left;
+  padding: 11px 12px;
+  border-bottom: 1px solid #e9edf4;
+}
+.live-app .result-table th {
+  color: #42516a;
+  font-weight: 650;
+}
+.live-app .result-table thead {
+  background: #f8f9fc;
+}
+.live-app .result-table tr:hover {
+  background: #faf8fe;
+}
+.live-app .table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.live-app .result-trajectory {
+  width: min(100%, 520px);
+  height: auto;
+}
+.live-app #unsaved {
+  color: #906215;
+  font-size: 12px;
+  margin: 12px 0;
+}
+.live-app #timeline label {
+  margin: 12px 0;
+}
+.live-app #timeline-time {
+  width: 100%;
+  accent-color: var(--indigo);
+}
+.live-app #timeline .layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.live-app #timeline .simulation-label {
+  font-size: 11px;
+}
+.live-app #diagnostics {
+  background: #fbfbfd;
+}
+.live-app #diagnostics > summary {
+  font-weight: 650;
+}
+.live-app pre {
+  max-height: 330px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: #526078;
+  font-size: 11px;
+  line-height: 1.7;
+}

@@ -1,0 +1,221 @@
+/* Session state and six equally weighted, stable metric cards. */
+.live-app .session-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+}
+.live-app .session-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-right: auto;
+}
+.live-app .session-heading .eyebrow {
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+.live-app .session-heading strong {
+  font-size: 14px;
+}
+.live-app .badge {
+  padding: 6px 9px;
+  color: #6b5795;
+  background: #f2eef9;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.live-app .badge[data-state="RUNNING"] {
+  color: #087465;
+  background: #eaf7f2;
+}
+.live-app .badge[data-state="PAUSED"],
+.live-app .badge[data-state="TIMED_OUT"] {
+  color: #8c5b11;
+  background: #fff4dc;
+}
+.live-app .protocol-steps {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.live-app .protocol-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #667288;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.live-app .protocol-steps li > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e1e5ed;
+  border-radius: 50%;
+  color: #647087;
+  font-size: 9px;
+}
+.live-app .protocol-steps .is-current {
+  color: #6338b9;
+  font-weight: 750;
+}
+.live-app .protocol-steps .is-current > span {
+  border-color: #d6c9f1;
+  background: #ede6fb;
+  color: #6338b9;
+}
+.live-app .protocol-steps .is-complete > span {
+  border-color: #cce9de;
+  background: #eaf7f2;
+  color: #087465;
+}
+.live-app #interval {
+  color: #8c5b11;
+  font-size: 12px;
+}
+.live-app #interval:empty {
+  display: none;
+}
+.live-app #metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.live-app .metric-tile {
+  min-width: 0;
+  padding: 17px 16px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.live-app .metric-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: #56627a;
+  font-size: 12px;
+  min-height: 32px;
+}
+.live-app .metric-label svg {
+  width: 16px;
+  height: 16px;
+  color: #8f72bf;
+}
+.live-app #metrics strong {
+  display: block;
+  min-height: 34px;
+  margin: 14px 0 8px;
+  color: #38245b;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.live-app #metrics #active {
+  font-size: 19px;
+  padding-top: 4px;
+}
+.live-app #metrics #recovery {
+  font-size: 20px;
+  padding-top: 3px;
+}
+.live-app .metric-hint {
+  display: block;
+  color: #637087;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.live-app .tone-teal .metric-label svg,
+.live-app .tone-teal strong {
+  color: #087465 !important;
+}
+.live-app .tone-amber .metric-label svg,
+.live-app .tone-amber strong {
+  color: #9b5c13 !important;
+}
+.live-app .controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.live-app .session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+.live-app .primary-controls {
+  flex: 1;
+}
+.live-app .more-actions {
+  position: relative;
+}
+.live-app .connection-actions {
+  position: relative;
+}
+.live-app .connection-actions summary {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #526078;
+  font-size: 12px;
+}
+.live-app .connection-actions[open] > .controls {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: 8;
+  min-width: 240px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(24 34 59 / 12%);
+}
+.live-app .connection-actions button {
+  width: 100%;
+}
+.live-app .more-actions summary {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #526078;
+  font-size: 12px;
+}
+.live-app .more-actions[open] > .controls {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: 8;
+  min-width: 230px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(24 34 59 / 12%);
+}
+.live-app .more-actions button {
+  width: 100%;
+}
+.live-app #guidance {
+  flex: 1 0 100%;
+  margin: 0;
+  color: #627088;
+  font-size: 11px;
+}

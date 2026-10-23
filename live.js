@@ -1,9 +1,16 @@
 import { professionalLayout } from "./public/modules/layout.js";
 import { text, number, time, labels } from "./public/modules/format.js";
 import { drawBoard } from "./public/modules/board.js";
-import { waveform, spectrum, comparison } from "./public/modules/charts.js";
+import {
+  waveform,
+  spectrum,
+  comparison,
+  activityTrend,
+} from "./public/modules/charts.js";
 import { metricDetails, renderReport } from "./public/modules/results.js";
 import { bindControls } from "./public/modules/controls.js";
+import { studentShell, renderStudent } from "./public/modules/student-view.js";
+import { updateMonitor, updateBands } from "./public/modules/monitor-view.js";
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
   socket = io();
@@ -26,9 +33,8 @@ try {
 } catch {
   credentials = null;
 }
-root.innerHTML = student
-  ? '<button id="fullscreen">Tela cheia</button><section id="student-view"></section>'
-  : professionalLayout();
+document.body.classList.add(student ? "student-app" : "professional-app");
+root.innerHTML = student ? studentShell() : professionalLayout();
 const message = (value) => {
   if (student) {
     const p = document.createElement("p");
@@ -113,34 +119,6 @@ timeline = bindControls({
   exportData,
   message,
 });
-function studentView(previous) {
-  if (
-    previous?.state === state.state &&
-    previous?.runId === state.runId &&
-    previous?.phase === state.phase
-  )
-    return;
-  const view = document.getElementById("student-view");
-  if (["READY", "RUNNING"].includes(state.state)) {
-    view.innerHTML =
-      '<h2 id="student-instruction"></h2><canvas id="board" width="800" height="800" aria-label="Labirinto: mova o mouse pelos corredores do verde ao violeta"></canvas><p>Mova o mouse pelos corredores, do verde ao violeta.</p>';
-    text("student-instruction", `${state.label} · ${labels[state.state]}`);
-    if (state.state === "RUNNING") window.closeAttobrainMenu?.();
-  } else {
-    view.innerHTML =
-      '<div class="waiting"><img src="/assets/logotipo.png" alt="Attobrain"><h1 id="student-waiting"></h1><p>Aguarde as orientações do profissional.</p></div>';
-    text(
-      "student-waiting",
-      state.phase === "INTERVAL"
-        ? "Intervalo"
-        : state.state === "PAUSED"
-          ? "Atividade pausada"
-          : state.closed
-            ? "Sessão encerrada"
-            : labels[state.state],
-    );
-  }
-}
 socket.on("snapshot", (incoming) => {
   const previous = state;
   state = { ...state, ...incoming };
@@ -158,10 +136,18 @@ socket.on("snapshot", (incoming) => {
     `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
   );
   if (student) {
-    studentView(previous);
+    renderStudent(state, previous);
     return;
   }
-  text("phase", `${state.label || "Preparação"} · ${state.phase}`);
+  updateMonitor(state, events);
+  if (!previous && state.state !== "IDLE")
+    document.getElementById("activity-setup").open = false;
+  if (previous?.state === "IDLE" && state.state === "READY") {
+    document.getElementById("activity-setup").open = false;
+    document
+      .getElementById("monitoring")
+      .scrollIntoView({ behavior: "instant", block: "start" });
+  }
   text("status", labels[state.state]);
   text(
     "interval",
@@ -176,7 +162,7 @@ socket.on("snapshot", (incoming) => {
     "recovery",
     state.metrics?.recovery.median != null
       ? `${number(state.metrics.recovery.median / 1000)} s`
-      : "Indisponível",
+      : "—",
   );
   document.getElementById("progress-bar").value = state.metrics?.progress ?? 0;
   document.getElementById("empty").hidden = !!state.maze;
@@ -299,16 +285,14 @@ function render(now) {
   const spectral = (spectrumData ?? state.eegStatus?.spectrum)?.channels[
     selected
   ];
-  text(
-    "bands",
-    spectral?.valid
-      ? Object.entries(spectral.absolute)
-          .map(
-            ([band, v]) =>
-              `${band}: ${number(v)} µV² · ${number(spectral.relative[band], 1)}%`,
-          )
-          .join(" | ")
-      : "Aguardando oito segundos contínuos para Welch.",
+  updateBands(spectral);
+  document.getElementById("signal-empty").hidden =
+    !!eegChannels[selected]?.length;
+  activityTrend(
+    document.getElementById("activity-trend"),
+    trail,
+    state.metrics,
+    state.config?.speed,
   );
   if (document.getElementById("diagnostics").open) {
     waveform(

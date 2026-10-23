@@ -16,6 +16,11 @@ export function bindControls({
       document.documentElement.requestFullscreen().catch(() => {});
     mouseInput(socket, state);
   } else {
+    document
+      .querySelector(".monitor-heading a")
+      .addEventListener("click", () => {
+        document.getElementById("activity-setup").open = true;
+      });
     for (const type of [
       "start",
       "pause",

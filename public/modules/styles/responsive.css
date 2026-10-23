@@ -1,0 +1,248 @@
+@media (min-width: 1700px) {
+  .live-app .monitor-grid {
+    grid-template-columns: minmax(0, 2.6fr) minmax(280px, 1fr);
+  }
+}
+@media (max-width: 1250px) {
+  .live-app #metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .live-app .monitor-grid {
+    grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr);
+  }
+  .live-app .protocol-steps {
+    gap: 12px;
+  }
+  .live-app main {
+    padding: 26px;
+  }
+}
+@media (max-width: 900px) {
+  .live-app .monitor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .live-app .context-column {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .live-app .setup {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .live-app .preview-card #board {
+    max-width: 270px;
+  }
+  .live-app .session-strip {
+    gap: 16px;
+  }
+}
+@media (max-width: 600px) {
+  .live-app main {
+    padding: 20px 16px;
+  }
+  .live-app .topbar {
+    padding: 10px 16px;
+    height: 68px;
+    gap: 10px;
+  }
+  .live-app .crumb {
+    font-size: 10px;
+  }
+  .live-app #connection {
+    font-size: 9px;
+    max-width: 52%;
+    padding: 6px 8px;
+  }
+  .live-app .page-heading {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .live-app .page-heading h1 {
+    font-size: 25px;
+  }
+  .live-app .page-heading p {
+    font-size: 12px;
+  }
+  .live-app .page-heading > .button {
+    font-size: 0;
+    min-width: 40px;
+    padding: 10px;
+  }
+  .live-app .page-heading > .button svg {
+    width: 18px;
+    height: 18px;
+  }
+  .live-app .card,
+  .live-app .monitor-grid .card {
+    padding: 18px;
+    border-radius: 12px;
+  }
+  .live-app #metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .live-app #metrics strong {
+    font-size: 25px;
+  }
+  .live-app .metric-tile {
+    padding: 15px 12px;
+  }
+  .live-app .session-heading {
+    flex: 1 0 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .live-app .protocol-steps {
+    width: 100%;
+    gap: 0;
+    justify-content: space-between;
+  }
+  .live-app .protocol-steps li {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 9px;
+  }
+  .live-app .primary-controls button {
+    flex: 1 1 42%;
+  }
+  .live-app .more-actions {
+    width: 100%;
+  }
+  .live-app .more-actions[open] > .controls {
+    position: static;
+    margin-top: 10px;
+    box-shadow: none;
+  }
+  .live-app .context-column {
+    grid-template-columns: 1fr;
+  }
+  .live-app .setup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .live-app .observation-summary {
+    gap: 8px;
+  }
+  .live-app .observation-summary strong {
+    font-size: 12px;
+  }
+  .live-app .band-summary {
+    gap: 5px;
+  }
+  .live-app .band-tile strong {
+    font-size: 17px;
+  }
+  .live-app .band-tile > span {
+    font-size: 9px;
+  }
+  .live-app .band-tile {
+    padding-right: 4px;
+  }
+  .live-app .summary-hint {
+    display: none;
+  }
+  .live-app #timeline .layout {
+    grid-template-columns: 1fr;
+  }
+  .live-app.student-app main {
+    padding: 20px 16px;
+  }
+  .live-app .student-toolbar {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .live-app .student-brand > span {
+    display: none;
+  }
+  .live-app #fullscreen {
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+  .live-app #student-view {
+    padding: 22px 16px;
+    border-radius: 18px;
+  }
+  .live-app .student-welcome {
+    min-height: 76vh;
+  }
+  .live-app .student-logo-halo {
+    width: 125px;
+    height: 125px;
+    margin-bottom: 34px;
+  }
+  .live-app .student-logo-halo img {
+    width: 80px;
+    height: 80px;
+  }
+  .live-app .student-guide {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top: 30px;
+  }
+  .live-app #student-view.is-playing {
+    padding: 20px 12px;
+  }
+  .live-app .student-board-wrap {
+    width: 100%;
+    padding: 8px;
+  }
+  .live-app .student-task-heading {
+    gap: 8px;
+  }
+  .live-app .student-task-description {
+    font-size: 12px;
+  }
+  .live-app .student-legend {
+    gap: 15px;
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-app * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 600px) {
+  .live-app .connection-actions {
+    width: 100%;
+  }
+  .live-app .connection-actions[open] > .controls {
+    position: static;
+    margin-top: 10px;
+    box-shadow: none;
+  }
+}
+@media print {
+  .sidebar,
+  .topbar,
+  .monitor-heading,
+  .session-strip,
+  .metric-grid,
+  .session-actions,
+  .monitor-grid,
+  .setup-panel,
+  .detail-panel,
+  #timeline,
+  #diagnostics,
+  #message {
+    display: none !important;
+  }
+  body .workspace {
+    margin: 0 !important;
+  }
+  .live-app main {
+    padding: 0;
+  }
+  .live-app #results {
+    border: 0;
+  }
+  .live-app #results details > * {
+    display: block !important;
+  }
+  .live-app canvas {
+    break-inside: avoid;
+  }
+}
