@@ -6,6 +6,8 @@ const { describe, setFor, cellAt } = require("./mazes");
 const { move } = require("../../engine");
 const { analyze } = require("./metrics");
 const { consolidate } = require("./report");
+const { interpretation } = require("./analysis/report");
+const { draftCommand, studentReady } = require("./workflow");
 const TERMINAL = new Set(["COMPLETED", "TIMED_OUT", "ABORTED"]);
 const STEP = 1000 / 60;
 class Session {
@@ -20,6 +22,15 @@ class Session {
     this.accumulator = 0;
     this.config = configuration();
     this.phase = "PREPARATION";
+    this.guided = false;
+    this.draftStep = "participant";
+    this.participant = null;
+    this.preview = null;
+    this.controlRevision = 0;
+    this.presence = { visible: false, at: -Infinity };
+    this.reportCache = null;
+    this.reportKey = "";
+    this.endReason = null;
     this.runs = [];
     this.events = [];
     this.current = null;
@@ -39,6 +50,7 @@ class Session {
     this.eeg = { blocks: [], spectra: [], artifacts: [], gaps: [], samples: 0 };
   }
   event(type, data = {}, source = "server") {
+    if (["prepared", "pause", "started", "resumed", "run-ended", "session-ended"].includes(type)) this.controlRevision++;
     const e = {
       schemaVersion: 2,
       sessionId: this.id,
@@ -84,6 +96,8 @@ class Session {
     this.current = {
       id: randomUUID(),
       label,
+      executionConfig: this.config,
+      setId: this.set?.id ?? null,
       ...description,
       state: "READY",
       active: 0,
@@ -132,15 +146,16 @@ class Session {
     const p = this.current?.pauses.at(-1);
     if (p && p.end === null) p.end = this.time;
   }
-  finish(state) {
+  finish(state, reason = null) {
     const r = this.current;
     if (!r || TERMINAL.has(r.state)) return;
     this.closePause();
     r.state = state;
+    r.endReason = state === "COMPLETED" ? "completed" : state === "TIMED_OUT" ? "timed-out" : reason === "technical" ? "technical" : reason === "session-limit" ? "session-limit" : "voluntary";
     r.endedAt = this.time;
     r.sessionNow = this.time;
     r.target = null;
-    this.event("run-ended", { state, label: r.label });
+    this.event("run-ended", { state, label: r.label, reason: r.endReason });
     r.result = analyze(r, this.config);
     Object.freeze(r.result);
     if (["A", "B"].includes(r.label)) {
@@ -150,12 +165,32 @@ class Session {
     else {
       this.phase = "FINISHED";
       this.closed = true;
+      this.endReason = r.endReason;
     }
   }
   execute(command) {
+    if (command.reason !== undefined && !["voluntary", "technical", "session-limit"].includes(command.reason)) throw Error("Motivo de encerramento inválido.");
+    if (this.guided && !["notes", "reanalyze"].includes(command.type) && command.expectedRevision !== this.controlRevision)
+      throw Error("O estado mudou. Confira a etapa atual e tente novamente.");
+    if (["select-participant", "configure", "back"].includes(command.type)) {
+      draftCommand(this, command);
+      this.reportCache = null;
+      return { ok: true };
+    }
     const r = this.current;
     switch (command.type) {
+      case "reanalyze":
+        this.reportCache = null;
+        this.reportKey = "";
+        this.report();
+        this.controlRevision++;
+        break;
+      case "begin":
+        if (!this.participant || this.draftStep !== "review" || !this.professional || !studentReady(this)) throw Error("Revise a sessão e conecte uma tela do aluno visível.");
+        this.prepare(this.config);
+        break;
       case "prepare":
+        if (this.guided) throw Error("Use a preparação guiada e confirme a revisão.");
         this.prepare(
           command.config ?? {
             level: command.level,
@@ -173,6 +208,7 @@ class Session {
           !this.student
         )
           throw Error("Conecte as duas telas e confira o estado.");
+        if (!studentReady(this)) throw Error("A tela do aluno precisa estar visível e conectada.");
         this.closePause();
         r.state = "RUNNING";
         r.startedAt ??= this.time;
@@ -189,7 +225,7 @@ class Session {
       case "abort":
         if (!r || !["RUNNING", "PAUSED", "READY"].includes(r.state))
           throw Error("Nenhuma atividade para encerrar.");
-        this.finish("ABORTED");
+        this.finish("ABORTED", command.reason);
         break;
       case "next":
         if (!r || !TERMINAL.has(r.state) || this.closed)
@@ -202,6 +238,7 @@ class Session {
         break;
       case "repeat-training":
         if (
+          this.closed ||
           r?.label !== "Treinamento" ||
           !TERMINAL.has(r.state) ||
           this.runs.filter((run) => run.label === "Treinamento").length >= 7
@@ -211,10 +248,11 @@ class Session {
         break;
       case "end-session":
         if (this.closed) throw Error("Sessão já encerrada.");
-        if (r && !TERMINAL.has(r.state)) this.finish("ABORTED");
+        if (r && !TERMINAL.has(r.state)) this.finish("ABORTED", command.reason);
         this.phase = "FINISHED";
         this.closed = true;
-        this.event("session-ended");
+        this.endReason = command.reason === "technical" ? "technical" : command.reason === "session-limit" ? "session-limit" : "voluntary";
+        this.event("session-ended", { reason: this.endReason });
         break;
       case "notes":
         if (typeof command.value !== "string" || command.value.length > 4000)
@@ -292,7 +330,7 @@ class Session {
     const r = this.current;
     if (r) r.sessionNow = this.time;
     if (now - this.origin >= 1800000 && !this.closed) {
-      this.execute({ type: "end-session" });
+      this.execute({ type: "end-session", reason: "session-limit", expectedRevision: this.controlRevision });
       this.event("session-limit");
     }
     if (!r || r.state !== "RUNNING") return;
@@ -341,6 +379,7 @@ class Session {
         t: r.active,
         sessionTime: this.time,
         segment: r.segment,
+        validInput: !!r.target && this.time - r.lastInput <= 500,
         hits: moved.hits,
         cells,
       });
@@ -384,7 +423,17 @@ class Session {
     return r.result ?? this.liveResult;
   }
   report() {
-    return consolidate(this.runs, this.config, this.set?.id);
+    const key = this.runs.map(r => `${r.id}:${r.state}`).join("|");
+    if (this.reportCache && key === this.reportKey) return this.reportCache;
+    const base = consolidate(this.runs, this.config, this.set?.id);
+    try {
+      const analysis = interpretation(this.runs, this.config, this.set?.id);
+      this.reportCache = { ...base, rules: analysis.observations.map(o => ({ ruleId: o.ruleId, version: o.ruleVersion, text: o.statement, metrics: o.evidence.map(e => e.metric), values: o.evidence.map(e => e.value), runIds: o.evidence.map(e => e.runId) })), analysis };
+    } catch {
+      this.reportCache = { ...base, rules: [], analysis: null, analysisError: "A análise não pôde ser concluída. Os registros estão preservados; tente recalcular." };
+    }
+    this.reportKey = key;
+    return this.reportCache;
   }
   view(role, full = false) {
     return sessionView(this, role, full);

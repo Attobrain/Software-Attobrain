@@ -52,6 +52,7 @@ test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, 
       request(p, "command", {
         id: owner.id,
         commandId: randomUUID(),
+        expectedRevision: app.repository.sessions.get(owner.id).controlRevision,
         type,
         ...extra,
       });
@@ -64,8 +65,12 @@ test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, 
         })
       ).error,
     );
+    await command("select-participant", { participant: { id: "demo", name: "Demonstração" } });
+    await command("configure", { config: {} });
+    s.emit("presence", { visible: true });
+    await delay(20);
     const id = randomUUID(),
-      prepare = { id: owner.id, commandId: id, type: "prepare", config: {} };
+      prepare = { id: owner.id, commandId: id, type: "begin", expectedRevision: app.repository.sessions.get(owner.id).controlRevision };
     assert.equal((await request(p, "command", prepare)).ok, true);
     assert.equal((await request(p, "command", prepare)).ok, true);
     assert.equal(app.repository.sessions.get(owner.id).runs.length, 1);
@@ -112,6 +117,8 @@ test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, 
         .role,
       "student",
     );
+    again.emit("presence", { visible: true });
+    await delay(20);
     assert.equal((await command("resume")).ok, true);
     const current = app.repository.sessions.get(owner.id).current,
       beforeInputs = current.inputs.length;
@@ -156,7 +163,7 @@ test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, 
     });
     assert.equal(response.status, 200);
     const data = await response.json();
-    assert.equal(data.schemaVersion, 2);
+    assert.equal(data.schemaVersion, 3);
     assert.equal(data.report.evaluations[1].state, "NOT_PERFORMED");
     assert.equal(data.notes, "Observação privada");
     assert(!JSON.stringify(data).includes(owner.key));
@@ -229,13 +236,62 @@ test("retenção em memória libera sessões sem conexão após 30 minutos", () 
   assert.equal(repository.sessions.size, 0);
   assert(s.id);
 });
+
+test("fluxo guiado Socket.IO: criação idempotente, prévia pura, revisão, presença e recuperação", async () => {
+  const app = await setup({ eeg: false }), p = app.connect();
+  try {
+    await fetch(`${app.url}/`);
+    assert.equal(app.repository.sessions.size, 0);
+    const token = randomUUID(), owner = await request(p, "join", { create: true, creationToken: token });
+    assert.equal((await request(p, "join", { create: true, creationToken: token })).id, owner.id);
+    assert.equal(app.repository.sessions.size, 1);
+    const session = app.repository.sessions.get(owner.id);
+    const command = (type, extra = {}) => request(p, "command", { id: owner.id, commandId: randomUUID(), expectedRevision: session.controlRevision, type, ...extra });
+    assert((await command("prepare", { config: {} })).error);
+    assert((await command("configure", { config: {} })).error);
+    assert((await command("select-participant", { participant: { id: "test", name: "Teste" } })).ok);
+    const revision = session.revision;
+    assert.equal((await request(p, "preview", { config: {} })).preview.length, 4);
+    assert.equal(session.revision, revision); assert.equal(session.runs.length, 0);
+    assert((await command("configure", { config: {} })).ok);
+    assert((await command("begin")).error);
+    const student = app.connect();
+    let studentView;
+    student.on("snapshot", value => { studentView = value; });
+    await request(student, "join", { id: owner.id, key: owner.studentKey });
+    assert((await command("begin")).error);
+    student.emit("presence", { visible: true }); await delay(20);
+    assert((await command("begin")).ok);
+    assert.equal(session.runs.length, 1);
+    const old = session.controlRevision;
+    assert((await command("start")).ok);
+    assert((await command("pause", { expectedRevision: old })).error);
+    student.emit("presence", { visible: false }); await delay(20);
+    assert.equal(session.current.state, "PAUSED");
+    p.disconnect(); await delay(30);
+    const recovered = app.connect();
+    assert.equal((await request(recovered, "join", { id: owner.id, key: owner.key })).id, owner.id);
+    assert.equal(session.runs.length, 1);
+    await request(recovered, "command", { id: owner.id, commandId: randomUUID(), expectedRevision: session.controlRevision, type: "end-session", reason: "technical" });
+    await delay(30);
+    assert.equal(studentView.closed, true);
+    for (const name of ["participant", "workflow", "report", "metrics", "presence"]) assert.equal(studentView[name], undefined);
+    assert.equal(session.report().analysis.quality.completed, 0);
+  } finally { await app.cleanup(); }
+});
 test("worker multicanal contínuo durante pausa; espectro e índices íntegros", async () => {
   const app = await setup(),
     p = app.connect();
   let eegBlocks = 0,
     spectral = false,
-    lastIndex = 0;
+    lastIndex = null;
+  let spectralTimeout;
+  const spectralReady = new Promise((resolve, reject) => {
+    spectralTimeout = setTimeout(() => reject(Error("Espectro válido não recebido em 12 s.")), 12000);
+    p.on("spectrum", value => { if (value.channels[0].valid) { clearTimeout(spectralTimeout); resolve(); } });
+  });
   p.on("eeg", (b) => {
+    lastIndex ??= b.startIndex;
     assert.equal(b.startIndex, lastIndex);
     lastIndex += b.count;
     assert.equal(b.channels.length, 8);
@@ -247,40 +303,42 @@ test("worker multicanal contínuo durante pausa; espectro e índices íntegros",
   });
   try {
     const owner = await request(p, "join", { create: true });
-    assert(
-      (
-        await request(p, "command", {
-          id: owner.id,
-          commandId: randomUUID(),
-          type: "prepare",
-          config: {},
-        })
-      ).ok,
-    );
     const s = app.connect();
     await request(s, "join", { id: owner.id, key: owner.studentKey });
+    const command = (type, extra = {}) => request(p, "command", { id: owner.id, commandId: randomUUID(), expectedRevision: app.repository.sessions.get(owner.id).controlRevision, type, ...extra });
+    assert((await command("select-participant", { participant: { id: "demo", name: "Demonstração" } })).ok);
+    assert((await command("configure", { config: {} })).ok);
+    const session = app.repository.sessions.get(owner.id);
+    assert.equal(session.worker, undefined);
+    assert.equal(session.eeg.samples, 0);
+    s.emit("presence", { visible: true });
+    await delay(20);
+    assert((await command("begin")).ok);
     await request(p, "command", {
       id: owner.id,
       commandId: randomUUID(),
+      expectedRevision: session.controlRevision,
       type: "start",
     });
     await delay(150);
     await request(p, "command", {
       id: owner.id,
       commandId: randomUUID(),
+      expectedRevision: session.controlRevision,
       type: "pause",
     });
     const before = lastIndex;
-    await delay(8500);
+    await spectralReady;
     assert(lastIndex > before + 1900);
     assert(eegBlocks > 60);
     assert(spectral);
-    const session = app.repository.sessions.get(owner.id);
-    assert.equal(session.eeg.gaps.length, 0);
+    assert.equal(session.eeg.gaps.filter(g => g.reason !== "preparation-not-collected").length, 0);
+    assert.equal(session.eeg.blocks[0].startIndex, session.eeg.startIndex);
     assert.equal(session.current.state, "PAUSED");
     await request(p, "command", {
       id: owner.id,
       commandId: randomUUID(),
+      expectedRevision: session.controlRevision,
       type: "end-session",
     });
     const response = await fetch(`${app.url}/api/sessions/${owner.id}/export`, {
@@ -289,11 +347,12 @@ test("worker multicanal contínuo durante pausa; espectro e índices íntegros",
     const data = await response.json();
     assert.equal(
       data.eeg.samples,
-      data.eeg.blocks.reduce((v, b) => v + b.count, 0),
+      data.eeg.startIndex + data.eeg.blocks.reduce((v, b) => v + b.count, 0),
     );
     assert(data.eeg.samples >= before + 1900);
     assert.equal(data.runs[0].state, "ABORTED");
   } finally {
+    clearTimeout(spectralTimeout);
     await app.cleanup();
   }
 });

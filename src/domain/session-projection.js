@@ -1,5 +1,6 @@
 "use strict";
 const { analyze } = require("./metrics");
+const { workflow } = require("./workflow");
 function sessionView(session, role, full = false) {
   const r = session.current,
     base = {
@@ -24,6 +25,10 @@ function sessionView(session, role, full = false) {
   if (role === "student") return base;
   return {
     ...base,
+    workflow: workflow(session),
+    presence: { visible: session.presence.visible, recent: session.time - session.presence.at <= 5000 },
+    participant: session.participant,
+    endReason: session.endReason,
     config: session.config,
     set: session.set,
     metrics: session.result(),
@@ -38,7 +43,7 @@ function sessionView(session, role, full = false) {
     eegStatus: {
       samples: session.eeg.samples,
       blocks: session.eeg.blocks.length,
-      bytes: session.eeg.samples * session.config.channels * 4,
+      bytes: Math.max(0, session.eeg.samples - (session.eeg.startIndex ?? 0)) * session.config.channels * 4,
       gaps: session.eeg.gaps,
       artifacts: session.eeg.artifacts
         .filter((a) => {
@@ -81,12 +86,15 @@ function sessionView(session, role, full = false) {
 }
 function sessionExport(session, includeEEG = true) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     manifest: {
       sessionId: session.id,
       createdAt: session.createdAt,
       source: "mouse",
       eegSource: "synthetic",
+      participant: session.participant,
+      endReason: session.endReason,
+      interpretationEligible: false,
       units: {
         position: "board-width",
         time: "ms",
@@ -120,6 +128,9 @@ function sessionExport(session, includeEEG = true) {
         endedAt,
         limitMs,
         events,
+        executionConfig,
+        setId,
+        endReason,
       } = run;
       return {
         id,
@@ -140,6 +151,9 @@ function sessionExport(session, includeEEG = true) {
         endedAt,
         limitMs,
         events,
+        executionConfig,
+        setId,
+        endReason,
         result: run.result ?? analyze(run, session.config),
       };
     }),

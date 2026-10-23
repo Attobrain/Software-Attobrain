@@ -26,6 +26,7 @@ async function streamExport(session, request, response) {
       pauses: r.pauses.map((p) => ({ ...p })),
     }));
     const eeg = {
+      startIndex: session.eeg.startIndex ?? 0,
       samples: session.eeg.samples,
       blocks: [...session.eeg.blocks],
       spectra: [...session.eeg.spectra],
@@ -77,6 +78,7 @@ async function streamExport(session, request, response) {
       '],"eeg":' +
         JSON.stringify({
           samples: eeg.samples,
+          startIndex: eeg.startIndex,
           gaps: eeg.gaps,
           artifacts: eeg.artifacts,
         }).slice(0, -1) +

@@ -45,10 +45,11 @@ export function metricDetails(m) {
 }
 export function renderReport(report) {
   if (!report) return;
+  const evaluations = report.single?.length ? report.single.map(r => ({ ...r, label: "Exploração" })) : report.evaluations;
   document.getElementById("report-description").textContent =
     report.description;
   document.getElementById("comparison").innerHTML =
-    `<div class="table-wrap"><table class="result-table"><thead><tr><th>Atividade</th><th>Situação</th><th>Tempo ativo</th><th>Eficiência (%)</th><th>Contatos/min</th><th>CV</th></tr></thead><tbody>${report.evaluations.map((r) => `<tr><th>${r.label}</th><td>${esc(r.state === "NOT_PERFORMED" ? "Não realizada" : (labels[r.state] ?? r.state))}</td><td>${time(r.result?.activeMs)}</td><td>${number(r.result?.efficiency)}</td><td>${number(r.result?.contactsPerMinute)}</td><td>${number(r.result?.velocity.cv)}</td></tr>`).join("")}</tbody></table></div><p class="panel-caption">Comparação geométrica operacional. Treinamento excluído. Três tentativas não estimam confiabilidade clínica.</p><details><summary>Agregados e comparações entre pares</summary><pre>${esc(JSON.stringify({ aggregates: report.aggregates, pairs: report.pairs }, null, 2))}</pre></details>`;
+    `<div class="table-wrap"><table class="result-table"><thead><tr><th>Atividade</th><th>Situação</th><th>Tempo ativo</th><th>Eficiência (%)</th><th>Contatos/min</th><th>CV</th></tr></thead><tbody>${evaluations.map((r) => `<tr><th>${r.label}</th><td>${esc(r.state === "NOT_PERFORMED" ? "Não realizada" : (labels[r.state] ?? r.state))}</td><td>${time(r.result?.activeMs)}</td><td>${number(r.result?.efficiency)}</td><td>${number(r.result?.contactsPerMinute)}</td><td>${number(r.result?.velocity.cv)}</td></tr>`).join("")}</tbody></table></div><p class="panel-caption">Comparação geométrica operacional. Treinamento excluído. Três tentativas não estimam confiabilidade clínica.</p><details><summary>Agregados e comparações entre pares</summary><pre>${esc(JSON.stringify({ aggregates: report.aggregates, pairs: report.pairs }, null, 2))}</pre></details>`;
   document.getElementById("rules").innerHTML = report.rules.length
     ? report.rules
         .map(

@@ -2,12 +2,15 @@
 const { performance } = require("node:perf_hooks");
 const { SessionRepository } = require("../repositories/sessions");
 const { startEEG } = require("../services/eeg");
+const { preview } = require("../domain/workflow");
+const { COMMANDS } = require("../types/protocol");
 function attach(
   io,
   {
     repository = new SessionRepository(),
     clock = () => performance.now(),
     eeg = true,
+    logger = () => {},
   } = {},
 ) {
   const cursors = new Map(),
@@ -45,11 +48,12 @@ function attach(
         try {
           handler(request, ack);
         } catch (error) {
+          logger({ level: "warn", event: "request-rejected", transportEvent: event, reason: error.message });
           ack({ error: error.message });
         }
       });
     safe("join", (request, reply) => {
-      if (session) throw Error("Já associado.");
+      if (session && !(request?.create === true && request.creationToken && repository.creations.get(request.creationToken) === session.id)) throw Error("Já associado.");
       if (!request || typeof request !== "object")
         throw Error("Requisição inválida.");
       if (request.create === true) {
@@ -60,7 +64,12 @@ function attach(
           throw Error("Muitas criações. Aguarde um minuto.");
         times.push(now);
         limits.set(address, times);
-        session = repository.create(now);
+        const candidate = request.creationToken && repository.creations.get(request.creationToken);
+        if (candidate) {
+          const existing = repository.sessions.get(candidate);
+          if (existing.professional && existing.professional !== socket.id) throw Error("Esta sessão já está aberta em outra tela profissional.");
+        }
+        session = repository.create(now, request.creationToken, true);
         role = "professional";
       } else {
         const candidate = repository.sessions.get(request.id);
@@ -94,6 +103,7 @@ function attach(
     });
     safe("command", (request, reply) => {
       if (!session || role !== "professional") throw Error("Sem permissão.");
+      if (!Object.hasOwn(COMMANDS, request?.type)) throw Error("Comando indisponível.");
       if (
         !request ||
         request.id !== session.id ||
@@ -116,7 +126,8 @@ function attach(
             "Crie nova sessão para preservar resultados e credenciais.",
           );
         result = session.execute(request);
-        if (request.type === "prepare" && eeg)
+        logger({ level: "info", event: "session-command", sessionId: session.id, command: request.type, controlRevision: session.controlRevision });
+        if (["prepare", "begin"].includes(request.type) && session.current && !session.worker && eeg)
           session.worker = startEEG(session, (type, data) => {
             if (session.professional)
               io.to(session.professional).emit(
@@ -138,8 +149,29 @@ function attach(
       reply(result);
       full(session);
     });
+    safe("preview", (request, reply) => {
+      if (!session || role !== "professional" || session.current || session.closed) throw Error("Prévia indisponível.");
+      const now = clock();
+      if (now - (socket.data.previewAt ?? -Infinity) < 150) throw Error("Aguarde antes de atualizar a prévia.");
+      socket.data.previewAt = now;
+      reply({ preview: preview(request?.config) });
+    });
+    safe("resync", (request, reply) => {
+      if (!session || !role) throw Error("Sem associação à sessão.");
+      if (clock() - (socket.data.resyncAt ?? -Infinity) < 500) throw Error("Aguarde antes de atualizar os dados.");
+      socket.data.resyncAt = clock();
+      sendFull(socket, session, role);
+      reply({ ok: true });
+    });
     socket.on("input", (request) => {
       if (session && role === "student") session.input(request);
+    });
+    socket.on("presence", (request) => {
+      if (!session || role !== "student" || typeof request?.visible !== "boolean") return;
+      if (request.visible === session.presence.visible && clock() - (socket.data.presenceAt ?? -Infinity) < 200) return;
+      socket.data.presenceAt = clock();
+      session.presence = { visible: request.visible, at: session.time };
+      if (!request.visible) session.pause("student-hidden");
     });
     safe("ping-clock", (request, reply) =>
       reply({
@@ -150,6 +182,7 @@ function attach(
     socket.on("disconnect", () => {
       if (!session) return;
       session[role] = null;
+      if (role === "student") session.presence = { visible: false, at: -Infinity };
       session.lastConnected = clock();
       session.pause("disconnected");
       full(session);

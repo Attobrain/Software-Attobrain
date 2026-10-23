@@ -15,7 +15,7 @@
       sidebar.className = "sidebar";
       const links = student
         ? '<a class="nav-link active" href="#student-view"><img src="/assets/icon-maze.svg" alt="">Atividade</a>'
-        : '<a class="nav-link active" href="#monitoring"><img src="/assets/icon-maze.svg" alt="">Monitoramento</a><a class="nav-link" href="#activity-setup"><img src="/assets/icon-maze.svg" alt="">Configurar sessão</a><a class="nav-link" href="#results"><img src="/assets/icon-home.svg" alt="">Resultado da sessão</a><a class="nav-link" href="#timeline"><img src="/assets/icon-home.svg" alt="">Linha do tempo</a><a class="nav-link" href="#diagnostics"><img src="/assets/icon-home.svg" alt="">Área técnica</a>';
+        : '<a class="nav-link active" href="#overview"><img src="/assets/icon-home.svg" alt="">Início</a><a class="nav-link" href="#students"><img src="/assets/icon-students.svg" alt="">Alunos</a><a class="nav-link" href="#session"><img src="/assets/icon-maze.svg" alt="">Labirinto</a>';
       sidebar.innerHTML =
         '<div class="brand"><div class="brand-logo-window"><img src="/assets/attobrain-logo.svg" alt="Attobrain"></div><small>Projeto Integrador I</small></div><nav class="side-nav" aria-label="Navegação principal">' +
         links +
@@ -89,7 +89,7 @@
     sidebar.addEventListener("click", (event) => {
       const link = event.target.closest("a");
       if (!link) return;
-      if (live && link.getAttribute("href").startsWith("#")) {
+      if (live && !["#overview", "#students", "#session"].includes(link.getAttribute("href")) && link.getAttribute("href").startsWith("#")) {
         event.preventDefault();
         const section = document.querySelector(link.getAttribute("href"));
         if (section && !section.hidden) {

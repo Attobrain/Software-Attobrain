@@ -64,6 +64,7 @@ test("mensagens do aluno são neutras e não expõem dados profissionais", async
     "../../public/modules/student-view.js"
   );
   assert(studentMessage({ state: "PAUSED" }).title.includes("pausa"));
+  assert(studentMessage({ disconnected: true }).title.includes("conexão"));
   assert(studentMessage({ state: "TIMED_OUT" }).title.includes("terminou"));
   assert(
     studentMessage({ state: "RUNNING", phase: "INTERVAL" }).title.includes(

@@ -19,7 +19,7 @@ function analyze(run, config) {
     maze = run.maze,
     contacts = [],
     recoveries = [],
-    low = lowMovement(steps, config),
+    low = lowMovement(validSegments(steps), config),
     backtracks = [],
     directions = [];
   let distance = 0,
@@ -218,3 +218,13 @@ function analyze(run, config) {
   };
 }
 module.exports = { analyze, statistics, quantile };
+// Missing input is not stationary behavior. Split gaps without connecting episodes.
+function validSegments(steps) {
+  if (steps.every(s => s.validInput !== false)) return steps;
+  let segment = 0, previous = null;
+  return steps.flatMap(s => {
+    if (s.validInput === false) { segment++; previous = null; return []; }
+    if (previous !== s.segment) { segment++; previous = s.segment; }
+    return [{ ...s, segment }];
+  });
+}

@@ -1,3 +1,4 @@
+import { createPlatform } from "./public/modules/platform.js";
 import { professionalLayout } from "./public/modules/layout.js";
 import { text, number, time, labels } from "./public/modules/format.js";
 import { drawBoard } from "./public/modules/board.js";
@@ -13,7 +14,7 @@ import { studentShell, renderStudent } from "./public/modules/student-view.js";
 import { updateMonitor, updateBands } from "./public/modules/monitor-view.js";
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
-  socket = io();
+  socket = io({ autoConnect: false });
 // A reused student window must re-associate when a new session link changes its fragment.
 if (student) window.addEventListener("hashchange", () => location.reload());
 let credentials,
@@ -42,49 +43,59 @@ const message = (value) => {
     root.append(p);
   } else text("message", value);
 };
-socket.on("connect", () =>
-  socket.emit(
-    "join",
-    credentials?.id && credentials?.key
-      ? { id: credentials.id, key: credentials.key }
-      : { create: !student },
-    (reply) => {
+let joinPromise = null, joinResolve, joinReject;
+let platform;
+function join() {
+  socket.emit("join", credentials?.id && credentials?.key
+    ? { id: credentials.id, key: credentials.key }
+    : { create: !student, guided: true, creationToken: sessionStorage.getItem("atto-create") || undefined }, reply => {
       if (reply.error) {
         message(reply.error);
         if (!student) {
-          sessionStorage.removeItem("atto-control");
           const button = document.createElement("button");
+          button.className = "secondary"; button.dataset.flow = "new";
           button.textContent = "Criar nova sessão";
-          button.onclick = () => location.reload();
-          root.prepend(button);
+          document.getElementById("message").append(button);
         }
-        return;
+        joinReject?.(Error(reply.error)); return;
       }
       credentials = reply;
       if (!student) {
         sessionStorage.setItem("atto-control", JSON.stringify(reply));
-        document.getElementById("student-link").href =
-          `${location.origin}/aluno#id=${reply.id}&key=${reply.studentKey}`;
+        sessionStorage.removeItem("atto-create");
+        document.getElementById("student-link").href = `${location.origin}/aluno#id=${reply.id}&key=${reply.studentKey}`;
       }
-    },
-  ),
-);
-socket.on("disconnect", () =>
-  text("connection", "Sem conexão · atividade interrompida"),
-);
+      joinResolve?.(reply);
+    });
+}
+socket.on("connect", join);
+function connect(retry = false) {
+  if (retry) { socket.disconnect(); joinPromise = null; }
+  if (joinPromise) return joinPromise;
+  if (!student && !credentials?.id && !sessionStorage.getItem("atto-create")) sessionStorage.setItem("atto-create", crypto.randomUUID());
+  joinPromise = new Promise((resolve, reject) => { joinResolve = resolve; joinReject = reject; });
+  socket.connect();
+  return joinPromise;
+}
+socket.on("disconnect", () => {
+  text("connection", "Sem conexão · atividade interrompida");
+  if (student) {
+    const previous = state;
+    state = { ...state, disconnected: true };
+    renderStudent(state, previous);
+  }
+});
 function command(type, extra = {}) {
-  socket
-    .timeout(5000)
-    .emit(
-      "command",
-      { id: credentials?.id, commandId: crypto.randomUUID(), type, ...extra },
-      (error, reply) =>
-        message(
-          error
-            ? "Sem confirmação. Confira a conexão antes de continuar."
-            : (reply.error ?? ""),
-        ),
-    );
+  return new Promise((resolve, reject) => {
+    socket.timeout(5000).emit("command", {
+      id: credentials?.id, commandId: crypto.randomUUID(), type,
+      expectedRevision: state?.workflow?.controlRevision, ...extra,
+    }, (error, reply) => {
+      const problem = error ? "Sem confirmação. Confira o estado antes de tentar novamente." : reply?.error;
+      if (problem) { message(problem); reject(Error(problem)); }
+      else { message(""); resolve(reply); }
+    });
+  });
 }
 async function exportData(download, instant = 0) {
   if (!credentials) throw Error("Conecte a sessão.");
@@ -119,13 +130,39 @@ timeline = bindControls({
   exportData,
   message,
 });
+function newSession() { document.getElementById("new-session").click(); }
+function showImported(data) {
+  eegChannels = [];
+  spectrumData = data.eeg.spectra?.at(-1) ?? null;
+  for (const block of data.eeg.blocks.slice(-90)) acceptBlock(block);
+  document.getElementById("channel").replaceChildren(...Array.from({ length: data.manifest.config.channels ?? 1 }, (_, i) => new Option(`V${i + 1}`, String(i))));
+  text("technical", JSON.stringify({ manifest: data.manifest, quality: data.report.analysis?.quality, originalImportedReport: true }, null, 2));
+  text("connection", "Arquivo importado · somente leitura");
+  renderReport(data.report);
+  comparison(document.getElementById("comparison-chart"), data.report.single?.length ? data.report.single.map(r => ({ ...r, label: "Exploração" })) : data.report.evaluations ?? []);
+  results = data.runs.map(r => ({ ...r, result: r.result }));
+  document.getElementById("notes").value = data.notes ?? "";
+  document.getElementById("notes").disabled = true;
+  document.getElementById("export").disabled = true;
+  document.getElementById("inspect").disabled = true;
+  text("unsaved", "Arquivo original importado · inspeção local somente leitura.");
+}
+function restoreLive() {
+  results = []; eegChannels = []; spectrumData = null; lastReport = "";
+  document.getElementById("notes").disabled = false;
+  document.getElementById("export").disabled = false;
+  document.getElementById("inspect").disabled = false;
+  if (socket.connected) socket.emit("resync", {}, () => {});
+}
+if (student) connect().catch(error => message(error.message));
+else platform = createPlatform({ connect, command, state: () => state, credentials: () => credentials, socket, message, timeline, showImported, restoreLive, newSession });
 socket.on("snapshot", (incoming) => {
   const previous = state;
-  state = { ...state, ...incoming };
+  state = { ...state, ...incoming, disconnected: false };
   if (incoming.full) {
     trail = incoming.trajectory ?? [];
     events = incoming.events ?? [];
-    results = incoming.results ?? [];
+    if (!platform?.isImported()) results = incoming.results ?? [];
   } else {
     if (previous?.runId !== incoming.runId) trail = [];
     trail.push(...(incoming.trajectory ?? []));
@@ -133,20 +170,19 @@ socket.on("snapshot", (incoming) => {
   }
   text(
     "connection",
-    `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
+    platform?.isImported() ? "Arquivo importado · sessão ao vivo preservada" : `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
   );
   if (student) {
     renderStudent(state, previous);
     return;
   }
+  platform?.update(previous);
   updateMonitor(state, events);
+  if (platform?.isImported()) return;
   if (!previous && state.state !== "IDLE")
     document.getElementById("activity-setup").open = false;
   if (previous?.state === "IDLE" && state.state === "READY") {
     document.getElementById("activity-setup").open = false;
-    document
-      .getElementById("monitoring")
-      .scrollIntoView({ behavior: "instant", block: "start" });
   }
   text("status", labels[state.state]);
   text(
@@ -168,24 +204,27 @@ socket.on("snapshot", (incoming) => {
   document.getElementById("empty").hidden = !!state.maze;
   const terminal = ["COMPLETED", "TIMED_OUT", "ABORTED"].includes(state.state),
     enabled = {
-      start: state.state === "READY" && state.connected.student,
+      start: state.workflow.actions.start,
       pause: state.state === "RUNNING",
-      resume: state.state === "PAUSED" && state.connected.student,
+      resume: state.workflow.actions.resume,
       abort: ["READY", "RUNNING", "PAUSED"].includes(state.state),
-      next: terminal && !state.closed && state.intervalRemaining === 0,
+      next: state.workflow.actions.next,
       "repeat-training":
-        terminal && state.label === "Treinamento" && !state.closed,
+        state.workflow.actions.repeat,
       "end-session": !state.closed,
       "new-session": state.state !== "RUNNING",
     };
   for (const [id, value] of Object.entries(enabled))
     document.getElementById(id).disabled = !value;
+  for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: terminal && !state.closed, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
   for (const input of document.getElementById("configuration").elements)
     input.disabled = state.state !== "IDLE";
   text(
     "guidance",
     state.phase === "INTERVAL"
-      ? "Consulte o resultado e aguarde a pausa mínima. O avanço exige comando explícito."
+      ? "Aguarde a pausa mínima. Depois, prepare a próxima atividade."
+      : state.state === "READY" && !state.workflow.studentReady
+        ? "Deixe a janela do aluno visível e conectada para liberar o início."
       : state.state === "PAUSED"
         ? "Confira a conexão e a tela do aluno antes de retomar."
         : "Parâmetros experimentais. Movimento do mouse não mede atenção ou atividade cerebral.",
@@ -221,7 +260,7 @@ socket.on("snapshot", (incoming) => {
     renderReport(state.report);
     comparison(
       document.getElementById("comparison-chart"),
-      state.report.evaluations,
+      state.report.single?.length ? state.report.single.map(r => ({ ...r, label: "Exploração" })) : state.report.evaluations,
     );
   }
   if (document.activeElement !== document.getElementById("notes"))
@@ -263,32 +302,34 @@ function acceptBlock(block) {
     if (excess > 0) eegChannels[i].splice(0, excess);
   });
 }
-socket.on("eeg", acceptBlock);
+socket.on("eeg", block => { if (!platform?.isImported()) acceptBlock(block); });
 socket.on("eeg-history", (blocks) => {
+  if (platform?.isImported()) return;
   eegChannels = [];
   for (const b of blocks) acceptBlock(b);
 });
 socket.on("spectrum", (value) => {
+  if (platform?.isImported()) return;
   spectrumData = value;
 });
 function render(now) {
   requestAnimationFrame(render);
-  if (!state) return;
-  drawBoard(document.getElementById("board"), state, {
+  if (!state && !platform?.isImported()) return;
+  if (document.getElementById("board")?.checkVisibility()) drawBoard(document.getElementById("board"), state, {
     trail: !student && document.getElementById("trail").checked ? trail : [],
     metrics: student ? null : state.metrics,
   });
   if (student || now - lastRender < 100) return;
   lastRender = now;
   const selected = Number(document.getElementById("channel").value) || 0;
-  waveform(document.getElementById("eeg"), [eegChannels[selected] ?? []]);
-  const spectral = (spectrumData ?? state.eegStatus?.spectrum)?.channels[
+  if (document.getElementById("eeg").checkVisibility()) waveform(document.getElementById("eeg"), [eegChannels[selected] ?? []]);
+  const spectral = (platform?.isImported() ? spectrumData : spectrumData ?? state.eegStatus?.spectrum)?.channels[
     selected
   ];
   updateBands(spectral);
   document.getElementById("signal-empty").hidden =
     !!eegChannels[selected]?.length;
-  activityTrend(
+  if (document.getElementById("activity-trend").checkVisibility()) activityTrend(
     document.getElementById("activity-trend"),
     trail,
     state.metrics,

@@ -1,0 +1,29 @@
+import { escape as esc, number, labels } from "./format.js";
+const dimensions = [
+  ["Controle do percurso", ["contacts", "efficiency", "contactDensity"]],
+  ["Regularidade da execução", ["speed", "cv"]],
+  ["Recuperação após dificuldades", ["recovery"]],
+  ["Continuidade da atividade", ["low"]],
+];
+const metricLabels = { contacts: "Contatos", efficiency: "Eficiência no grafo (%)", contactDensity: "Contatos/10 larguras de corredor", speed: "Velocidade média (larguras/s)", cv: "CV suavizado", recovery: "Recuperação mediana (s)", low: "Baixa movimentação (s)" };
+function value(feature, key) {
+  return feature?.eligibility === "eligible" ? number(feature.value, key === "speed" ? 4 : key === "contacts" ? 0 : key === "cv" ? 3 : 2) : "—";
+}
+function dimension(title, keys, features) {
+  const reasons = features.flatMap(f => keys.filter(k => f.metrics[k]?.eligibility !== "eligible").map(k => `${f.label} · ${metricLabels[k]}: ${f.metrics[k]?.reason ?? "Sem informação"}`));
+  return `<article class="card"><h2>${title}</h2>${features.length ? `<div class="table-wrap"><table class="result-table dimension-table"><thead><tr><th>Métrica</th>${features.map(f => `<th>${esc(f.label)}</th>`).join("")}</tr></thead><tbody>${keys.map(key => `<tr><th>${metricLabels[key]}</th>${features.map(f => `<td>${value(f.metrics[key], key)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : "<p>Sem atividade avaliativa registrada.</p>"}${reasons.length ? `<details class="availability"><summary>Disponibilidade dos dados</summary><ul>${reasons.map(reason => `<li>${esc(reason)}</li>`).join("")}</ul></details>` : ""}</article>`;
+}
+function observation(o) {
+  return `<details data-observation-id="${esc(o.id)}"><summary>${esc(o.statement)}</summary><p>${esc(o.criteria)}</p><p>Regra ${esc(o.ruleId)} · versão ${esc(o.ruleVersion)} · suporte suficiente para descrição</p><div class="table-wrap"><table class="result-table"><thead><tr><th>Atividade</th><th>Métrica</th><th>Valor</th><th>Evidência</th></tr></thead><tbody>${o.evidence.map(e => `<tr><td>${esc(e.label)}</td><td>${esc(metricLabels[e.metric] ?? e.metric)}</td><td>${number(e.value, e.metric === "speed" ? 4 : e.metric === "contacts" ? 0 : 2)} ${esc(e.unit)}</td><td><button class="secondary" data-evidence="${Number(e.sessionTime) || 0}">Ver percurso e instante</button></td></tr>`).join("")}</tbody></table></div><p>${o.limitations.map(esc).join(" ")}</p></details>`;
+}
+export function interpretationView(report, participant, sessionId, imported = false, endReason = null) {
+  const a = report?.analysis;
+  if (!a) return `<section class="card"><h2>${imported ? "Relatório original importado" : "Análise indisponível"}</h2><p>${esc(report?.analysisError ?? "Este arquivo não contém análise de qualidade. Os dados originais podem ser inspecionados abaixo; cobertura e suficiência não foram presumidas.")}</p>${!imported ? '<button data-flow="reanalyze">Recalcular análise</button>' : ""}</section>`;
+  const status = { sufficient: a.quality.expected === 1 ? "Descrição da atividade disponível" : "Comparação descritiva disponível", limited: "Interpretação limitada", insufficient: "Dados insuficientes" }[a.quality.status] ?? "Qualidade indisponível";
+  const summary = a.observations.filter(o => a.summary.includes(o.id));
+  const reason = { technical: "Encerramento por falha técnica", voluntary: "Encerramento voluntário", "session-limit": "Limite de duração da sessão", completed: "Último percurso concluído", "timed-out": "Limite de tempo da última atividade" }[endReason];
+  return `<section class="card professional-summary"><span class="eyebrow">RESUMO PROFISSIONAL${imported ? " · ARQUIVO ORIGINAL IMPORTADO" : ""}</span><h2>${esc(status)}</h2><p>${esc(participant?.name ?? "Participante demonstrativo")} · Sessão ${esc(sessionId)}</p><p><strong>${a.quality.performed}/${a.quality.expected ?? 3} atividade(s) realizada(s) · ${a.quality.completed}/${a.quality.expected ?? 3} percurso(s) concluído(s)</strong>${reason ? ` · ${esc(reason)}` : ""}</p>${summary.length ? summary.map(o => `<div class="summary-observation"><p>${esc(o.statement)}</p><button class="secondary evidence-link" data-observation="${esc(o.id)}">Por que o sistema diz isso?</button></div>`).join("") : "<p>Ainda não há observações elegíveis. Consulte os registros disponíveis.</p>"}<p class="panel-caption">Suporte de dados: ${esc(a.quality.status === "sufficient" ? "suficiente para descrição" : "limitado ou insuficiente")}. Sem comparação normativa ou diagnóstico.${imported ? " Conteúdo original preservado; não foi recalculado na importação." : ""}</p></section>
+  <section class="dimension-grid">${dimensions.map(([title, keys]) => dimension(title, keys, a.features)).join("")}<article class="card"><h2>Comparação entre tentativas</h2><p>${a.quality.expected === 1 ? "Exploração: atividade única, sem comparação A/B/C." : a.quality.comparable ? "Geometrias do conjunto operacional compatíveis. Cada métrica tem critérios próprios de suficiência." : "Não há duas atividades com comparabilidade geométrica disponível."}</p><p>As comparações descrevem esta sessão; não estimam confiabilidade.</p></article></section>
+  <details class="card observation-evidence" id="observations-panel"><summary>Evidências e critérios das observações (${a.observations.length})</summary><h2>Por que o sistema diz isso?</h2>${a.observations.map(observation).join("") || "<p>Não há padrões elegíveis para explicar.</p>"}</details>
+  <section class="card limitations"><h2>Limitações e proveniência</h2><ul>${a.limitations.map(v => `<li>${esc(v)}</li>`).join("")}</ul><p>Política ${esc(a.policy.version)} · ${esc(a.schemaVersion)}. Critérios operacionais, não limiares clínicos.</p><label><input type="checkbox" id="print-technical"> Incluir detalhes técnicos na impressão</label></section>`;
+}

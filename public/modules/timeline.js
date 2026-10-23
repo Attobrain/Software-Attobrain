@@ -58,6 +58,7 @@ export function bindTimeline(loadLive) {
     );
     show();
   }
+  document.getElementById("import").onclick = event => { event.target.value = ""; };
   document.getElementById("import").onchange = async (event) => {
     try {
       const file = event.target.files[0];
@@ -65,7 +66,9 @@ export function bindTimeline(loadLive) {
       if (file.size > 512 * 1024 * 1024)
         throw Error("Arquivo acima do limite de 512 MiB.");
       live = false;
-      setData(JSON.parse(await file.text()), "Arquivo importado");
+      const value = JSON.parse(await file.text());
+      setData(value, "Arquivo importado");
+      if (value.report) window.dispatchEvent(new CustomEvent("attobrain-import", { detail: value }));
       select.replaceChildren(
         ...data.events.map(
           (e) =>
@@ -96,7 +99,8 @@ export function bindTimeline(loadLive) {
     try {
       const value = await loadLive(false, instant);
       if (id !== requestId) return;
-      data = value;
+      setData(value, "Dados ao vivo copiados para inspeção");
+      slider.value = instant;
       show();
     } catch (error) {
       text("import-status", error.message);
@@ -112,6 +116,13 @@ export function bindTimeline(loadLive) {
   slider.oninput = show;
   slider.onchange = () => refreshLive(Number(slider.value));
   return {
+    reset() { data = null; live = false; slider.value = 0; document.getElementById("import").value = ""; },
+    inspectAt(instant, imported = false) {
+      slider.value = instant;
+      if (imported) { show(); return; }
+      live = true;
+      refreshLive(instant).then(() => { slider.value = instant; show(); });
+    },
     events: (events) => {
       if (document.activeElement === select || (!live && data)) return;
       const value = select.value;
@@ -131,13 +142,14 @@ export function bindTimeline(loadLive) {
   };
 }
 export function validateImport(data) {
-  if (data?.schemaVersion !== 2)
+  if (![2, 3].includes(data?.schemaVersion))
     throw Error(
       "Versão incompatível. Exportações antigas não contêm dados para as métricas v2.",
     );
   if (
     !data.manifest?.config ||
     ![250, 500].includes(data.manifest.config.sampleRate) ||
+    ![1, 4, 8].includes(data.manifest.config.channels) ||
     !Array.isArray(data.runs) ||
     data.runs.length > 10 ||
     !Array.isArray(data.events) ||
@@ -146,6 +158,10 @@ export function validateImport(data) {
     data.eeg.blocks.length > 20000
   )
     throw Error("Estrutura inválida.");
+  if (data.schemaVersion === 3 && (!data.report || !Array.isArray(data.report.evaluations) || !Array.isArray(data.report.training))) throw Error("Relatório v3 inválido.");
+  if (data.eeg.spectra !== undefined && (!Array.isArray(data.eeg.spectra) || data.eeg.spectra.length > 2000)) throw Error("Espectros inválidos.");
+  const analysis = data.report?.analysis;
+  if (analysis && (!analysis.quality || !Array.isArray(analysis.features) || analysis.features.length > 10 || !Array.isArray(analysis.observations) || analysis.observations.length > 1000 || !Array.isArray(analysis.summary) || !Array.isArray(analysis.limitations) || typeof analysis.policy?.version !== "string" || !analysis.observations.every(o => typeof o.statement === "string" && typeof o.criteria === "string" && Array.isArray(o.evidence) && o.evidence.length <= 100 && Array.isArray(o.limitations)))) throw Error("Análise importada inválida.");
   if (
     !data.events.every(
       (e) =>
@@ -171,7 +187,7 @@ export function validateImport(data) {
         (p) =>
           Number.isFinite(p.sessionTime) &&
           Number.isFinite(p.x) &&
-          Number.isFinite(p.y),
+          Number.isFinite(p.y) && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1,
       )
     )
       throw Error("Percurso inválido.");
@@ -183,9 +199,11 @@ export function validateImport(data) {
       !Number.isSafeInteger(b.count) ||
       b.count < 1 ||
       b.count > 500 ||
+      b.sampleRate !== data.manifest.config.sampleRate ||
       !Array.isArray(b.channels) ||
       b.channels.length < 1 ||
       b.channels.length > 8 ||
+      b.channels.length !== data.manifest.config.channels ||
       !b.channels.every(
         (c) =>
           Array.isArray(c) && c.length === b.count && c.every(Number.isFinite),

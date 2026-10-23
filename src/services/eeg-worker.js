@@ -6,8 +6,9 @@ const { welch } = require("./spectrum");
 const config = workerData.config,
   provider = new SyntheticEEG(config),
   origin = workerData.origin;
-let index = 0,
-  lastSpectrum = 0,
+const startIndex = workerData.startIndex ?? 0;
+let index = startIndex,
+  lastSpectrum = startIndex,
   finishIndex = null;
 const buffer = Array.from({ length: config.channels }, () => []);
 parentPort.on("message", (message) => {
@@ -51,7 +52,7 @@ const timer = setInterval(() => {
   if (index - lastSpectrum >= config.sampleRate) {
     lastSpectrum = index;
     const spectrum = {
-      startIndex: Math.max(0, index - config.sampleRate * 8),
+      startIndex: Math.max(startIndex, index - config.sampleRate * 8),
       endIndex: index,
       channels: buffer.map((values) => welch(values, config.sampleRate)),
       quality: "synthetic-known-artifacts",

@@ -2,10 +2,13 @@
 const { Worker } = require("node:worker_threads");
 const path = require("node:path");
 function startEEG(session, onData) {
+  const startIndex = session.guided ? Math.ceil(session.time * session.config.sampleRate / 1000) : 0;
+  session.eeg.startIndex = startIndex;
+  if (startIndex) session.eeg.gaps.push({ start: 0, end: startIndex, reason: "preparation-not-collected" });
   const worker = new Worker(path.join(__dirname, "eeg-worker.js"), {
-    workerData: { config: session.config, origin: session.origin },
+    workerData: { config: session.config, origin: session.origin, startIndex },
   });
-  let expected = 0,
+  let expected = startIndex,
     stopped = false,
     finishing = null;
   const done = new Promise((resolve) => worker.once("exit", resolve));

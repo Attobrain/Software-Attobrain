@@ -1,4 +1,7 @@
 export function mouseInput(socket, state) {
+  const presence = () => socket.emit("presence", { visible: !document.hidden });
+  socket.on("connect", presence);
+  setInterval(presence, 1000);
   let target = null,
     seq = 0,
     runId = null;
@@ -14,6 +17,7 @@ export function mouseInput(socket, state) {
     if (event.target.id === "board") target = null;
   });
   document.addEventListener("visibilitychange", () => {
+    presence();
     target = null;
     if (document.hidden) send();
   });

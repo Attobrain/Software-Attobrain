@@ -7,6 +7,7 @@ const { inspection } = require("./src/services/inspection");
 const { Server } = require("socket.io");
 const { attach } = require("./realtime");
 const { SessionRepository } = require("./src/repositories/sessions");
+const { protocolDescription } = require("./src/types/protocol");
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -34,6 +35,11 @@ function createApplication(options = {}) {
       let route = decodeURIComponent(
         new URL(req.url, "http://localhost").pathname,
       );
+      if (route === "/api/protocol") {
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(JSON.stringify(protocolDescription()));
+        return;
+      }
       if (
         route.startsWith("/api/sessions/") &&
         (route.endsWith("/export") || route.endsWith("/inspect"))
@@ -67,7 +73,6 @@ function createApplication(options = {}) {
           "/index.html",
           "/styles.css",
           "/app.js",
-          "/maze.js",
         ].includes(route) ||
         route.startsWith("/assets/") ||
         route.startsWith("/public/modules/");
@@ -132,7 +137,7 @@ function createApplication(options = {}) {
   };
 }
 if (require.main === module) {
-  const app = createApplication();
+  const app = createApplication({ logger: record => console.log(JSON.stringify(record)) });
   const port = Number(process.env.PORT) || 3000;
   app.server.listen(port, () =>
     console.log(`Attobrain: http://localhost:${port}/profissional`),
