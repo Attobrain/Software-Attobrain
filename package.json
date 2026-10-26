@@ -5,6 +5,7 @@
   "description": "Protótipo demonstrativo do Attobrain em Node.js",
   "main": "index.js",
   "scripts": {
+    "build:web": "node scripts/build-web.js",
     "start": "node index.js",
     "test": "node --test engine.test.js realtime.test.js src/tests/*.test.js",
     "test:soak": "node scripts/soak.js",

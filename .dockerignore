@@ -1,0 +1,8 @@
+node_modules
+.git
+dist
+.env*
+.vercel
+Imagem do ChatGPT*
+docs
+design-system

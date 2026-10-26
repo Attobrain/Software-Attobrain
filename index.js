@@ -16,6 +16,13 @@ const MIME = {
   ".png": "image/png",
 };
 function createApplication(options = {}) {
+  const allowedOrigins = new Set((options.allowedOrigins ?? process.env.ALLOWED_ORIGINS ?? "").split(",").map(value => value.trim()).filter(Boolean));
+  function originAllowed(req) {
+    const origin = req.headers.origin;
+    if (!origin) return true;
+    try { return allowedOrigins.has(origin) || new URL(origin).host === req.headers.host; }
+    catch { return false; }
+  }
   const repository = options.repository ?? new SessionRepository();
   const server = http.createServer(async (req, res) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -27,6 +34,17 @@ function createApplication(options = {}) {
       "default-src 'self'; script-src 'self'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
     );
     try {
+      if (req.headers.origin && !originAllowed(req)) {
+        res.writeHead(403); res.end("Origem não autorizada."); return;
+      }
+      if (req.headers.origin) {
+        res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+        res.setHeader("Vary", "Origin");
+        res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Authorization, X-Attobrain-Export");
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition, X-Attobrain-Export");
+      }
+      if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
       if (req.method !== "GET") {
         res.writeHead(405);
         res.end("Método não permitido.");
@@ -35,6 +53,14 @@ function createApplication(options = {}) {
       let route = decodeURIComponent(
         new URL(req.url, "http://localhost").pathname,
       );
+      if (route === "/health") {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ ok: true })); return;
+      }
+      if (route === "/vendor/socket.io.min.js") {
+        res.setHeader("Content-Type", MIME[".js"]);
+        res.end(await readFile(path.join(__dirname, "node_modules/socket.io/client-dist/socket.io.min.js"))); return;
+      }
       if (route === "/api/protocol") {
         res.setHeader("Content-Type", "application/json; charset=utf-8");
         res.end(JSON.stringify(protocolDescription()));
@@ -67,6 +93,7 @@ function createApplication(options = {}) {
       const allowed =
         [
           "/navigation.js",
+          "/runtime-config.js",
           "/live.html",
           "/live.js",
           "/live.css",
@@ -115,14 +142,10 @@ function createApplication(options = {}) {
     }
   });
   const io = new Server(server, {
+    cors: { origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)), methods: ["GET", "POST"] },
     maxHttpBufferSize: 16384,
     allowRequest: (req, callback) => {
-      const origin = req.headers.origin;
-      let allowed = !origin;
-      try {
-        allowed ||= new URL(origin).host === req.headers.host;
-      } catch {}
-      callback(null, allowed);
+      callback(null, originAllowed(req));
     },
   });
   const stop = attach(io, { repository, ...options });

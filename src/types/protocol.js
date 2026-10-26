@@ -6,7 +6,7 @@ const COMMANDS = Object.freeze({
 function protocolDescription() {
   return {
     version: 4,
-    transport: "Socket.IO same-origin",
+    transport: "Socket.IO WebSocket; mesma origem local ou origem HTTPS autorizada na hospedagem",
     events: { join: { create: { create: true, creationToken: "UUID mantido até confirmação" }, restore: { id: "sessionId", key: "credencial do papel" } }, presence: { visible: true }, preview: { config: DEFAULTS }, input: { runId: "runId", seq: 1, inside: true, hidden: false, x: .1, y: .1, clientTime: 0 } },
     command: { required: ["id", "commandId", "expectedRevision", "type"], types: COMMANDS, defaults: DEFAULTS },
     responses: { success: { ok: true }, invalid: { error: "Descrição da validação" }, conflict: { error: "O estado mudou. Confira a etapa atual e tente novamente." }, expired: { error: "Sessão não encontrada. Crie outra." } },

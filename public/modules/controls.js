@@ -78,11 +78,11 @@ export function bindControls({
       try {
         await navigator.clipboard.writeText(studentUrl());
         message(
-          "Link copiado. Para outro dispositivo, use o IP do servidor no lugar de localhost.",
+          ["localhost", "127.0.0.1"].includes(location.hostname) ? "Link copiado. Na rede local, use o IP do servidor no lugar de localhost." : "Link copiado. Envie para o participante abrir no computador dele.",
         );
       } catch {
         prompt(
-          "Link do aluno (substitua localhost pelo IP do servidor em outro dispositivo):",
+          "Link temporário do aluno:",
           studentUrl(),
         );
       }

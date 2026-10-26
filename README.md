@@ -21,6 +21,8 @@ O sistema é uma demonstração de software. O mouse não rastreia os olhos, o E
 
 ## Início rápido
 
+**Hospedagem web:** o frontend pode ser publicado na Vercel com `npm run build:web`. O servidor Node/Socket.IO roda em uma instância contínua HTTPS; configure `ATTOBRAIN_SERVER_URL` na Vercel e `ALLOWED_ORIGINS` no servidor. Assim, o link do aluno funciona entre computadores em redes diferentes. Veja o [guia completo de hospedagem e compartilhamento](docs/HOSPEDAGEM-WEB.md).
+
 ### Requisitos
 
 - Node.js 22 ou superior.
@@ -49,7 +51,7 @@ O painel inicial não cria uma sessão por conta própria. Entre em **Labirinto*
 
 Na etapa de revisão, selecione **Abrir tela do aluno** ou copie o link temporário e abra em outra janela. Mantenha as duas telas visíveis, lado a lado. A atividade só começa quando a tela do aluno estiver conectada e visível. Ocultar a janela, perder a conexão ou detectar uma interrupção técnica pausa a atividade. A retomada é autorizada pelo profissional.
 
-Para dois dispositivos na mesma rede, abra `/profissional` no computador servidor e substitua `localhost` pelo IP local desse computador no navegador do outro dispositivo. Compartilhe o link do aluno gerado pelo sistema. Os dois dispositivos precisam alcançar a porta `3000`; o software não configura firewall. O modo em rede local não é autenticação institucional e o servidor não deve ser publicado diretamente na internet.
+Para dois dispositivos na mesma rede, abra `/profissional` no computador servidor e substitua `localhost` pelo IP local desse computador no navegador do outro dispositivo. Compartilhe o link do aluno gerado pelo sistema. Os dois dispositivos precisam alcançar a porta `3000`; o software não configura firewall. Para compartilhar pela internet, siga o guia de hospedagem com HTTPS e origens autorizadas. As credenciais temporárias não são autenticação institucional.
 
 ## O que o sistema faz
 
@@ -191,7 +193,7 @@ Dados de aluno demonstrativo são mantidos pelo navegador na chave `attobrain-st
 
 ## API e comunicação
 
-`GET /api/protocol` publica o catálogo real de transportes, eventos, comandos, defaults e formatos HTTP. O transporte em tempo real usa Socket.IO same-origin. O fluxo cria ou restaura uma sessão e associa uma credencial ao papel profissional ou aluno. Comandos profissionais incluem `commandId` e `expectedRevision`; entradas do aluno incluem `runId`, sequência, coordenadas normalizadas e estado dentro/fora do quadro. A presença periódica informa se a página do aluno está visível.
+`GET /api/protocol` publica o catálogo real de transportes, eventos, comandos, defaults e formatos HTTP. O transporte em tempo real usa Socket.IO via WebSocket: mesma origem localmente ou servidor HTTPS configurado na publicação. O fluxo cria ou restaura uma sessão e associa uma credencial ao papel profissional ou aluno. Comandos profissionais incluem `commandId` e `expectedRevision`; entradas do aluno incluem `runId`, sequência, coordenadas normalizadas e estado dentro/fora do quadro. A presença periódica informa se a página do aluno está visível.
 
 Rotas HTTP documentadas pelo catálogo:
 

@@ -13,9 +13,10 @@ import { metricDetails, renderReport } from "./public/modules/results.js";
 import { bindControls } from "./public/modules/controls.js";
 import { studentShell, renderStudent } from "./public/modules/student-view.js";
 import { updateMonitor, updateBands } from "./public/modules/monitor-view.js";
+const serverUrl = window.ATTOBRAIN_CONFIG?.serverUrl || location.origin;
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
-  socket = io({ autoConnect: false });
+  socket = io(serverUrl, { autoConnect: false, transports: ["websocket"] });
 // A reused student window must re-associate when a new session link changes its fragment.
 if (student) window.addEventListener("hashchange", () => location.reload());
 let credentials,
@@ -71,6 +72,10 @@ function join() {
     });
 }
 socket.on("connect", join);
+socket.on("connect_error", () => {
+  text("connection", "Servidor indisponível · tentando reconectar");
+  message("Não foi possível conectar ao servidor da atividade. Verifique a conexão e a disponibilidade do serviço.");
+});
 function connect(retry = false) {
   if (retry) { socket.disconnect(); joinPromise = null; }
   if (joinPromise) return joinPromise;
@@ -103,7 +108,7 @@ function command(type, extra = {}) {
 async function exportData(download, instant = 0) {
   if (!credentials) throw Error("Conecte a sessão.");
   const response = await fetch(
-    `/api/sessions/${credentials.id}/${download ? "export" : `inspect?time=${Number(instant)}`}`,
+    `${serverUrl}/api/sessions/${credentials.id}/${download ? "export" : `inspect?time=${Number(instant)}`}`,
     {
       headers: {
         Authorization: `Bearer ${credentials.key}`,
