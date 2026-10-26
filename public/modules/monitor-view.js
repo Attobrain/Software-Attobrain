@@ -35,7 +35,7 @@ export function updateMonitor(state, events) {
   text(
     "trend-caption",
     hasSamples
-      ? `Tempo ativo · velocidade em larguras/s. ${m.contacts.length} contatos registrados nesta atividade.`
+      ? `Tempo ativo · velocidade em larguras/s. ${m.collisionEpisodeCount ?? "—"} episódios; ${m.contacts.length} registros por parede nesta atividade.`
       : "O gráfico aparecerá quando a atividade começar.",
   );
   const phase = state.closed

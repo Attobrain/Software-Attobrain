@@ -255,6 +255,8 @@ test("velocidade constante: CV zero; recuperação exige redução de distância
   const recovery = metricRun(stationary(1000, (i) => (i === 0 ? [1] : [])));
   const cell = recovery.path[1];
   recovery.steps.at(-1).cells = [cell];
+  recovery.steps.at(-1).x = ((cell % 7) + .5) / 7;
+  recovery.steps.at(-1).y = (Math.floor(cell / 7) + .5) / 7;
   const result = analyze(recovery, configuration());
   assert.equal(result.recovery.valid, 1);
   assert.equal(result.recovery.median, 950);
@@ -266,7 +268,7 @@ test("pausa interrompe episódios e não conecta trajetória nem recuperação",
   assert.equal(result.low.length, 2);
   assert.equal(result.recoveries[0].reason, "interruption");
 });
-test("resumos auditáveis exigem três conclusões e excluem treino", () => {
+test("registros antigos sem suporte não geram tendências ou agregados novos", () => {
   const make = (label, contacts, efficiency) => ({
     id: label,
     label,
@@ -288,9 +290,9 @@ test("resumos auditáveis exigem três conclusões e excluem treino", () => {
     make("C", 5, 90),
   ];
   const report = consolidate(runs, configuration(), "set");
-  assert.equal(report.aggregates.efficiency.median, 80);
-  assert(report.rules.find((r) => r.ruleId === "contacts-down"));
-  assert(report.rules.find((r) => r.ruleId === "efficiency-up"));
+  assert.equal(report.aggregates.efficiency.median, null);
+  assert.equal(report.analysis.quality.status, "insufficient");
+  assert.equal(report.rules.length, 0);
   assert.equal(
     consolidate(runs.slice(0, 3), configuration(), "set").rules.length,
     0,

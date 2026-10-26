@@ -2,6 +2,7 @@ import { escape as esc } from "./format.js";
 import { readStudents, saveStudent, removeStudent, studentForm, studentList } from "./students.js";
 import { drawBoard } from "./board.js";
 import { interpretationView } from "./interpretation-view.js";
+import { createReportTabs } from "./report-tabs.js";
 
 export function createPlatform({ connect, command, state, credentials, socket, message, timeline, showImported, restoreLive, newSession }) {
   const page = document.getElementById("platform-view"), session = document.getElementById("session-view");
@@ -19,6 +20,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   const notes = document.createElement("section"); notes.className = "card professional-notes";
   notes.append(document.getElementById("notes").closest("label"), document.getElementById("unsaved"));
   document.getElementById("result-panel").insertBefore(notes, document.getElementById("result-technical"));
+  const reportTabs = createReportTabs(technical, notes);
   document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Inspecionar linha do tempo e EEG sintético</button>');
   document.getElementById("result-new").onclick = newSession;
   const heading = (title, description) => `<section class="page-heading"><div><span class="eyebrow">PLATAFORMA ATTOBRAIN</span><h1 tabindex="-1">${title}</h1><p>${description}</p></div></section>`;
@@ -82,7 +84,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     }
     if (platformPage) {
       technical.hidden = true;
-      if (current === "overview") page.innerHTML = `${heading("Painel de demonstração", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice"><strong>Um ambiente de demonstração científica</strong><p>Interações do mouse são observadas durante o labirinto. O EEG é sintético; não há captura de sinais cerebrais ou diagnóstico.</p></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Organize os cadastros demonstrativos deste navegador.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto visual</h2><p>Uma preparação guiada, com treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Revisar um resultado exportado</h2><p>Abra um JSON v2 ou v3 para inspeção local, sem modificar uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório JSON</button></section>`;
+      if (current === "overview") page.innerHTML = `${heading("Painel de demonstração", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice"><strong>Um ambiente de demonstração científica</strong><p>Interações do mouse são observadas durante o labirinto. O EEG é sintético; não há captura de sinais cerebrais ou diagnóstico.</p></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Organize os cadastros demonstrativos deste navegador.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto visual</h2><p>Uma preparação guiada, com treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Revisar um resultado exportado</h2><p>Abra um JSON v2, v3 ou v4 para inspeção local, sem modificar uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório JSON</button></section>`;
       else if (creating || editId) page.innerHTML = `${heading("Cadastro demonstrativo", "Sem banco de dados. As alterações ficam neste navegador.")}${studentForm(editId ? readStudents().find(v => v.id === editId) : {})}`;
       else page.innerHTML = studentsPage();
       return;
@@ -93,6 +95,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       return;
     }
     if (current === "results" && imported) {
+      reportTabs.show(true);
       document.getElementById("wizard-panel").hidden = true;
       document.getElementById("configuration-panel").hidden = true;
       document.getElementById("execution-panel").hidden = true;
@@ -104,6 +107,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     }
     if (!s) return;
     const w = s.workflow, result = w.step === "results", config = w.step === "configuration", execution = !!s.runId;
+    reportTabs.show(result);
     document.getElementById("configuration-panel").hidden = !config;
     document.getElementById("execution-panel").hidden = !execution || result;
     document.getElementById("result-panel").hidden = !result;
@@ -126,9 +130,10 @@ export function createPlatform({ connect, command, state, credentials, socket, m
         document.getElementById("activity-setup").open = true;
         updatePreview();
       }
-      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">REVISÃO</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Protocolo</dt><dd>${s.config.mode === "protocol" ? "Treinamento + A/B/C" : "Exploração"}</dd><dt>Geometria</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Entrada</dt><dd>Mouse · sem rastreamento ocular</dd><dt>Duração máxima</dt><dd>Treino ${s.config.trainingSeconds} s · atividade ${s.config.activitySeconds} s</dd><dt>Intervalos A/B/C</dt><dd>${s.config.intervalSeconds} s</dd><dt>Simulação EEG</dt><dd>${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente" : "didática"}</dd></dl><p>Dados comportamentais temporários. EEG sintético excluído da interpretação.</p><button class="secondary" data-flow="back" data-step="configuration">Revisar configuração</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><p>Abra a janela do aluno e deixe-a visível ao lado deste painel. Alternar abas pode ocultar a atividade e provocar uma pausa.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Se a janela não abrir, permita o popup deste site e tente novamente.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
+      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">REVISÃO</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Protocolo</dt><dd>${s.config.mode === "protocol" ? "Treinamento + A/B/C" : "Exploração"}</dd><dt>Geometria</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Entrada</dt><dd>Mouse · sem rastreamento ocular</dd><dt>Duração máxima</dt><dd>Treino ${s.config.trainingSeconds} s · atividade ${s.config.activitySeconds} s</dd><dt>Intervalos A/B/C</dt><dd>${s.config.intervalSeconds} s</dd><dt>Simulação EEG</dt><dd>${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente" : "didática"}</dd></dl><p>Dados comportamentais temporários. EEG sintético excluído da interpretação.</p><button class="secondary" data-flow="back" data-step="configuration">Revisar configuração</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><img class="connection-illustration" src="/assets/screens-guide.png" alt="" width="180" height="130"><p>Abra a janela do aluno e deixe-a visível ao lado deste painel. Alternar abas pode ocultar a atividade e provocar uma pausa.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Se a janela não abrir, permita o popup deste site e tente novamente.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
       if (result) {
         document.getElementById("interpretation").innerHTML = interpretationView(s.report, s.participant, s.id, false, s.endReason);
+        reportTabs.activate("summary");
         document.getElementById("result-technical").open = false;
       }
       document.getElementById("flow-title").focus({ preventScroll: true });
@@ -175,6 +180,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     const anchor = event.target.closest('a[href="#timeline"], a[href="#diagnostics"]');
     if (anchor) {
       event.preventDefault();
+      if(!document.getElementById("result-panel").hidden) reportTabs.activate(anchor.hash==="#timeline"?"evidence":"technical");
       technical.hidden = false; technical.open = true;
       if (anchor.hash === "#diagnostics") document.getElementById("diagnostics").open = true;
       document.querySelector(anchor.hash).scrollIntoView({ behavior: "instant" });
@@ -189,6 +195,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
         if (target && panel) { panel.open = true; target.open = true; target.scrollIntoView({ behavior: "instant", block: "start" }); }
       }
       if (button.dataset.evidence !== undefined) {
+        reportTabs.activate("evidence");
         technical.hidden = false; technical.open = true;
         timeline.inspectAt(Number(button.dataset.evidence), !!imported);
         document.getElementById("timeline").scrollIntoView({ behavior: "instant" });
@@ -215,10 +222,16 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   window.addEventListener("hashchange", () => { renderKey = ""; try { show(); } catch (error) { message(error.message); } });
   window.addEventListener("attobrain-import", event => {
     try {
-      const data = event.detail;
+      const original = event.detail;
+      const data = original.report ? original : { ...original, report: {
+        analysis:null, description:"Arquivo histórico sem relatório de interpretação. Registros originais disponíveis para inspeção.",rules:[],aggregates:{},pairs:[],
+        evaluations:original.runs.filter(r=>["A","B","C"].includes(r.label)).map(r=>({...r,runId:r.id})),
+        training:original.runs.filter(r=>r.label==="Treinamento").map(r=>({...r,runId:r.id})),single:original.runs.filter(r=>r.label==="Exploração").map(r=>({...r,runId:r.id})),
+      }};
       const html = interpretationView(data.report, data.manifest.participant, data.manifest.sessionId, true, data.manifest.endReason);
       showImported(data);
       imported = data; document.getElementById("interpretation").innerHTML = html;
+      reportTabs.activate("summary");
       document.getElementById("result-technical").open = false;
       navigate("results");
       window.scrollTo({ top: 0, behavior: "instant" });

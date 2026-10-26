@@ -49,22 +49,18 @@ export function spectrum(canvas, data) {
   c.fillText("0 Hz", 35, h - 5);
   c.fillText("45 Hz", w - 45, h - 5);
 }
-export function comparison(canvas, evaluations) {
+export function comparison(canvas, analysis) {
   const c = canvas.getContext("2d"),
     w = canvas.width,
     h = canvas.height;
   c.clearRect(0, 0, w, h);
-  const metrics = [
-    ["efficiency", "Eficiência (%)"],
-    ["contactsPerMinute", "Contatos/min"],
-    ["cv", "CV da velocidade"],
-  ];
+  if (!analysis?.quality.comparable || analysis.schemaVersion!=="attobrain-interpretation-2.0") {
+    c.fillStyle="#526078"; c.font="16px sans-serif"; c.fillText("Comparação gráfica indisponível: consulte critérios e registros individuais.",20,45);return;
+  }
+  const evaluations=analysis.features.filter(f=>["A","B","C"].includes(f.label));
+  const metrics = [["contacts","Episódios"],["contactDensity","Episódios / referência"],["efficiency","Eficiência da rota (%)"]];
   metrics.forEach(([key, label], group) => {
-    const values = evaluations.map((r) =>
-        key === "cv"
-          ? (r.result?.velocity.cv ?? null)
-          : (r.result?.[key] ?? null),
-      ),
+    const values = evaluations.map(r=>r.state==="COMPLETED" && r.metrics[key]?.eligibility==="eligible" ? r.metrics[key].value:null),
       max = Math.max(...values.filter(Number.isFinite), 1e-9),
       width = w / 3;
     c.fillStyle = "#475569";
@@ -73,10 +69,10 @@ export function comparison(canvas, evaluations) {
       const x = group * width + 35 + (i * width) / 4,
         bar = Number.isFinite(v) ? (v / max) * (h - 75) : 0;
       c.fillStyle = ["#7346da", "#00baa8", "#e69a20"][i];
-      c.fillRect(x, h - 35 - bar, width / 6, bar);
+      if(Number.isFinite(v)) c.fillRect(x, h - 35 - bar, width / 6, bar);
       c.fillStyle = "#475569";
       c.fillText(
-        `${["A", "B", "C"][i]}: ${Number.isFinite(v) ? v.toFixed(2) : "—"}`,
+        `${evaluations[i].label}: ${Number.isFinite(v) ? v.toFixed(2) : "insuficiente"}`,
         x,
         h - 15,
       );

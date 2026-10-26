@@ -86,7 +86,7 @@ function sessionView(session, role, full = false) {
 }
 function sessionExport(session, includeEEG = true) {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     manifest: {
       sessionId: session.id,
       createdAt: session.createdAt,
@@ -101,7 +101,7 @@ function sessionExport(session, includeEEG = true) {
         eeg: "synthetic-uV",
         psd: "synthetic-uV^2/Hz",
       },
-      versions: { engine: 2, metrics: 2, eeg: 1, spectrum: 1 },
+      versions: { engine: 2, metrics: 3, interpretation: 2, policy: "engineering-2.0", contacts: "contacts-3.0", eeg: 1, spectrum: 1 },
       config: session.config,
       set: session.set,
     },

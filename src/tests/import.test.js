@@ -2,7 +2,7 @@
 const { test } = require("node:test"),
   assert = require("node:assert/strict");
 const { Session } = require("../domain/session");
-test("exportação v3 e importação v2/v3 conservam amostras e rejeitam payloads malformados", async () => {
+test("exportação v4 e importação v2/v3/v4 conservam amostras e rejeitam payloads malformados", async () => {
   const { validateImport } = await import("../../public/modules/timeline.js");
   const session = new Session(0);
   session.prepare({ channels: 1 });
@@ -15,7 +15,7 @@ test("exportação v3 e importação v2/v3 conservam amostras e rejeitam payload
   session.eeg.samples = 2;
   const data = JSON.parse(JSON.stringify(session.exportData()));
   assert.equal(validateImport(data), true);
-  assert.equal(data.schemaVersion, 3);
+  assert.equal(data.schemaVersion, 4);
   const legacy = structuredClone(data); legacy.schemaVersion = 2; delete legacy.report.analysis;
   assert.equal(validateImport(legacy), true);
   assert.deepEqual(data.eeg.blocks[0].channels[0], [1.25, -2.5]);

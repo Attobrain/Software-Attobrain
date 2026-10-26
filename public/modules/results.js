@@ -1,4 +1,5 @@
 import { escape as esc, number, time, labels } from "./format.js";
+import { metricValue } from "./interpretation-view.js";
 const row = (name, value) => `<tr><th>${name}</th><td>${esc(value)}</td></tr>`;
 export function metricDetails(m) {
   if (!m) return "Sem dados observados.";
@@ -8,18 +9,19 @@ export function metricDetails(m) {
       "Distância aceita / referência / grafo (larguras)",
       `${number(m.distance)} / ${number(m.reference)} / ${number(m.graphDistance)}`,
     ),
-    row("Eficiência no grafo (%)", number(m.efficiency)),
+    row("Eficiência da rota no grafo (%) · não mede precisão lateral", number(m.efficiency)),
     row(
-      "Distância excedente / percentual",
+      "Distância excedente no grafo / percentual",
       `${number(m.excess)} / ${number(m.excessPercent)}%`,
     ),
     row(
       "Velocidade média / DP (larguras/s)",
       `${number(m.speed, 4)} / ${number(m.velocity.sd, 4)}`,
     ),
-    row("CV da velocidade", number(m.velocity.cv, 3)),
+    row("CV por passo do motor · técnico, distinto do CV suavizado", number(m.velocity.cv, 3)),
+    row("Episódios / eventos / registros por parede", `${m.collisionEpisodeCount ?? "Histórico"} / ${m.collisionEventCount ?? "Histórico"} / ${m.wallContactCount ?? m.contacts.length}`),
     row(
-      "Contatos / minuto / largura",
+      "Legado: registros por parede / minuto / largura · valores técnicos",
       `${m.contacts.length} / ${number(m.contactsPerMinute)} / ${number(m.contactsPerDistance)}`,
     ),
     row(
@@ -45,11 +47,15 @@ export function metricDetails(m) {
 }
 export function renderReport(report) {
   if (!report) return;
+  document.getElementById("metric-catalog").innerHTML=(report.analysis?.features??[]).map(f=>`<details><summary>Catálogo de métricas · ${esc(f.label)}</summary>${Object.values(f.metrics).map(m=>`<article class="metric-definition"><h4>${esc(m.name??m.id??"Métrica histórica")}</h4><p>${metricValue(m,true)} · ${esc(m.eligibility)} · ${esc(m.reason??"Critério atendido")}</p><p>${esc(m.definition??"Definição histórica preservada no arquivo original.")}</p><small>Definição ${esc(m.definitionVersion)} · fonte ${esc(m.source??"arquivo histórico")} · suporte ${esc(m.supportCount??"não informado")}</small><p>${(m.limitations??[]).map(esc).join(" ")}</p></article>`).join("")}</details>`).join("")||"<p>Não há catálogo de métricas nesta versão do arquivo.</p>";
   const evaluations = report.single?.length ? report.single.map(r => ({ ...r, label: "Exploração" })) : report.evaluations;
   document.getElementById("report-description").textContent =
     report.description;
   document.getElementById("comparison").innerHTML =
-    `<div class="table-wrap"><table class="result-table"><thead><tr><th>Atividade</th><th>Situação</th><th>Tempo ativo</th><th>Eficiência (%)</th><th>Contatos/min</th><th>CV</th></tr></thead><tbody>${evaluations.map((r) => `<tr><th>${r.label}</th><td>${esc(r.state === "NOT_PERFORMED" ? "Não realizada" : (labels[r.state] ?? r.state))}</td><td>${time(r.result?.activeMs)}</td><td>${number(r.result?.efficiency)}</td><td>${number(r.result?.contactsPerMinute)}</td><td>${number(r.result?.velocity.cv)}</td></tr>`).join("")}</tbody></table></div><p class="panel-caption">Comparação geométrica operacional. Treinamento excluído. Três tentativas não estimam confiabilidade clínica.</p><details><summary>Agregados e comparações entre pares</summary><pre>${esc(JSON.stringify({ aggregates: report.aggregates, pairs: report.pairs }, null, 2))}</pre></details>`;
+    `<p>${report.analysis?.quality.comparable ? "Compatibilidade geométrica operacional confirmada; valores elegíveis por métrica." : esc(report.analysis?.comparability?.reasons?.join(" ") ?? "Comparação indisponível. Relatório histórico preservado nos detalhes.")}</p><div class="table-wrap"><table class="result-table"><thead><tr><th>Atividade</th><th>Situação</th><th>Tempo ativo</th><th>Episódios</th><th>Densidade</th><th>Eficiência da rota no grafo</th><th>CV suavizado</th></tr></thead><tbody>${evaluations.map(r=>{
+      const f=report.analysis?.features.find(f=>f.runId===r.runId), modern=report.analysis?.schemaVersion==="attobrain-interpretation-2.0";
+      return `<tr><th>${esc(r.label)}</th><td>${esc(labels[r.state]??r.state)}</td><td>${time(r.result?.activeMs)}</td>${["contacts","contactDensity","efficiency","cv"].map(key=>`<td>${modern?metricValue(f?.metrics[key]):"Definição histórica"}</td>`).join("")}</tr>`;
+    }).join("")}</tbody></table></div><p class="panel-caption">Valores individuais elegíveis não implicam comparabilidade. Eficiência no grafo não mede ausência de contatos nem precisão lateral.</p>`;
   document.getElementById("rules").innerHTML = report.rules.length
     ? report.rules
         .map(
@@ -63,8 +69,10 @@ export function renderReport(report) {
     ...(report.single ?? []),
   ]
     .map(
-      (r) =>
-        `<details><summary>Resultado ${esc(r.label ?? "Exploração")} · ${esc(labels[r.state] ?? r.state)}</summary>${metricDetails(r.result)}<canvas class="result-trajectory" data-run="${esc(r.runId)}" width="800" height="800" aria-label="Trajetória individual"></canvas></details>`,
+          (r) => {
+            const f=report.analysis?.features.find(f=>f.runId===r.runId);
+            return `<details><summary>Resultado ${esc(r.label ?? "Exploração")} · ${esc(labels[r.state] ?? r.state)}</summary><canvas class="result-trajectory" data-run="${esc(r.runId)}" width="800" height="800" aria-label="Trajetória e episódios por região"></canvas><p>${(f?.spatialEpisodes??[]).map(p=>`Célula ${p.cell+1}: ${p.count} episódio(s)`).join(" · ")||"Sem distribuição espacial de episódios disponível."}</p><div class="episode-list">${(r.result.collisionEpisodes??[]).map(e=>`<button class="secondary" data-evidence="${e.sessionTime??0}">Episódio ${esc(e.id.split(":").at(-1))} · ${time(e.start)} · ${e.censored?`sem recuperação observada (${esc(e.reason)})`:`recuperação em ${number(e.duration/1000)} s`}</button>`).join("")}</div><details><summary>Métricas calculadas e elegibilidade</summary>${f?`<div class="table-wrap"><table class="result-table"><thead><tr><th>Métrica</th><th>Valor calculado</th><th>Elegibilidade / motivo</th></tr></thead><tbody>${Object.values(f.metrics).map(m=>`<tr><th>${esc(m.name??m.id)}</th><td>${metricValue(m,true)}</td><td>${esc(m.eligibility)} · ${esc(m.reason??"Atende ao critério operacional")}</td></tr>`).join("")}</tbody></table></div>`:""}${metricDetails(r.result)}</details></details>`;
+          },
     )
     .join("");
   document.getElementById("training-results").innerHTML =

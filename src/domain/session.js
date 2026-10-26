@@ -6,7 +6,7 @@ const { describe, setFor, cellAt } = require("./mazes");
 const { move } = require("../../engine");
 const { analyze } = require("./metrics");
 const { consolidate } = require("./report");
-const { interpretation } = require("./analysis/report");
+const { freshWalls } = require("./contacts");
 const { draftCommand, studentReady } = require("./workflow");
 const TERMINAL = new Set(["COMPLETED", "TIMED_OUT", "ABORTED"]);
 const STEP = 1000 / 60;
@@ -392,10 +392,7 @@ class Session {
           sessionTime: this.time,
           segment: r.segment,
         });
-      const newHits = moved.hits.filter(
-        (h) => !r.hitLast.has(h) || r.active - r.hitLast.get(h) >= 200,
-      );
-      for (const h of moved.hits) r.hitLast.set(h, r.active);
+      const newHits = freshWalls(moved.hits, r.hitLast, r.active);
       if (newHits.length)
         this.event("contact", { walls: newHits, position: r.position });
       if (
@@ -425,12 +422,10 @@ class Session {
   report() {
     const key = this.runs.map(r => `${r.id}:${r.state}`).join("|");
     if (this.reportCache && key === this.reportKey) return this.reportCache;
-    const base = consolidate(this.runs, this.config, this.set?.id);
     try {
-      const analysis = interpretation(this.runs, this.config, this.set?.id);
-      this.reportCache = { ...base, rules: analysis.observations.map(o => ({ ruleId: o.ruleId, version: o.ruleVersion, text: o.statement, metrics: o.evidence.map(e => e.metric), values: o.evidence.map(e => e.value), runIds: o.evidence.map(e => e.runId) })), analysis };
+      this.reportCache = consolidate(this.runs, this.config, this.set?.id);
     } catch {
-      this.reportCache = { ...base, rules: [], analysis: null, analysisError: "A análise não pôde ser concluída. Os registros estão preservados; tente recalcular." };
+      this.reportCache = { evaluations: [], training: [], single: [], rules: [], aggregates: {}, pairs: [], analysis: null, analysisError: "A análise não pôde ser concluída. Os registros estão preservados; tente recalcular." };
     }
     this.reportKey = key;
     return this.reportCache;

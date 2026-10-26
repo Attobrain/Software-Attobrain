@@ -163,7 +163,7 @@ test("duas telas: autorização, idempotência, incrementos, pausa, reconexão, 
     });
     assert.equal(response.status, 200);
     const data = await response.json();
-    assert.equal(data.schemaVersion, 3);
+    assert.equal(data.schemaVersion, 4);
     assert.equal(data.report.evaluations[1].state, "NOT_PERFORMED");
     assert.equal(data.notes, "Observação privada");
     assert(!JSON.stringify(data).includes(owner.key));

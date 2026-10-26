@@ -102,15 +102,21 @@ export function bindControls({
     };
     document.getElementById("notes").onchange = (event) =>
       command("notes", { value: event.target.value }).catch(() => {});
-    document.getElementById("export").onclick = () =>
-      exportData(true).catch((error) => message(error.message));
+    document.getElementById("export").onclick = async () => {
+      try { await command("notes", { value: document.getElementById("notes").value }); await exportData(true); }
+      catch(error) { message(error.message); }
+    };
     document.getElementById("print").onclick = () => {
+      let printedNotes=document.getElementById("printed-notes");
+      if(!printedNotes){printedNotes=document.createElement("p");printedNotes.id="printed-notes";document.getElementById("notes").closest("label").after(printedNotes);}
+      printedNotes.textContent=document.getElementById("notes").value || "Nenhuma observação manual registrada.";
       document.body.classList.toggle("include-technical", !!document.getElementById("print-technical")?.checked);
-      const prior = [...document.querySelectorAll("#result-technical, #result-technical details, #technical-panel, #technical-panel details")].map(el => [el, el.open]);
+      const prior = [...document.querySelectorAll("#result-panel details")].map(el => [el, el.open]);
       if (document.body.classList.contains("include-technical")) {
         for (const [el] of prior) el.open = true;
       }
-      window.addEventListener("afterprint", () => { for (const [el, open] of prior) el.open = open; }, { once: true });
+      for(const el of document.querySelectorAll(".quality-reasons")) el.open=true;
+      window.addEventListener("afterprint", () => { for (const [el, open] of prior) el.open = open; document.body.classList.remove("include-technical"); }, { once: true });
       window.print();
     };
     timeline = bindTimeline(exportData);

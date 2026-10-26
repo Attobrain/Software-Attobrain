@@ -37,7 +37,7 @@ export function drawBoard(
     c.fillStyle = color;
     c.fill();
   }
-  const spatial = metrics?.spatialContacts;
+  const spatial = metrics?.spatialEpisodes ?? metrics?.spatialContacts;
   if (spatial?.length) {
     const max = Math.max(...spatial.map((p) => p.count));
     for (const p of spatial) {

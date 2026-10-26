@@ -1,5 +1,6 @@
 "use strict";
 const { statistics } = require("../metrics");
+const { POLICY } = require("./policy");
 /** @returns {{coverage: number|null, windows: number[], thirds: number[], thirdWindows: number[][], validMs: number, validDistance: number}} */
 function movementSupport(run) {
   let validMs = 0, validDistance = 0, elapsed = 0, distance = 0, segment = null;
@@ -30,24 +31,42 @@ function movementSupport(run) {
 }
 function features(run) {
   const m = run.result, support = movementSupport(run), seconds = run.active / 1000;
-  const adequate = seconds >= 30 && support.coverage !== null && support.coverage >= .8 - 1e-8;
-  const f = (value, unit, eligible, reason, count = null, version = "1.0") => ({
-    value: Number.isFinite(value) ? value : null, unit, eligibility: eligible && Number.isFinite(value) ? "eligible" : "limited", reason: eligible && Number.isFinite(value) ? null : reason, supportCount: count, definitionVersion: version,
-  });
+  const known = support.coverage !== null, covered = known && support.coverage >= POLICY.coverage - 1e-8;
+  const enough = run.active >= POLICY.minActiveMs - 1e-6;
+  const episodes = m.collisionEpisodes;
+  const contactValue = run.steps.length && Number.isInteger(m.collisionEpisodeCount) ? m.collisionEpisodeCount : null;
+  function f(id, name, value, unit, definition, minimum = true, reason = null, count = null, version = "3.0") {
+    const finite = Number.isFinite(value);
+    const eligibility = !finite ? "unavailable" : !minimum ? "insufficient" : !covered ? "limited" : "eligible";
+    return { id, name, value: finite ? value : null, unit, definition, definitionVersion: version, source: "mouse/accepted-indicator", supportCount: count, eligibility,
+      reason: !finite ? reason ?? "Fonte ausente ou cálculo indefinido." : !minimum ? reason : !known ? "Cobertura de entrada desconhecida." : !covered ? "Menos de 80% de cobertura válida." : null,
+      limitations: ["Critério operacional de engenharia, sem validação clínica."] };
+  }
   const cv = statistics(support.windows).cv;
   const completed = run.state === "COMPLETED";
+  const cells = new Map();
+  for (const episode of episodes ?? []) {
+    const item = cells.get(episode.cell) ?? { cell: episode.cell, count: 0, position: episode.position, episodeIds: [] };
+    item.count++; item.episodeIds.push(episode.id); cells.set(episode.cell, item);
+  }
   return {
     runId: run.id, label: run.label, state: run.state, seconds,
-    quality: { coverage: support.coverage, validMs: support.validMs, windows: support.windows.length, thirdsValidMs: support.thirds, thirdsCv: support.thirdWindows.map(v => statistics(v).cv), temporalEligible: seconds >= 45 && support.thirds.every(v => v >= 15000 - 1e-6) },
+    spatialEpisodes: [...cells.values()].sort((a,b) => b.count - a.count || a.cell - b.cell),
+    quality: { coverage: support.coverage, validMs: support.validMs, windows: support.windows.length, thirdsValidMs: support.thirds, thirdsCv: support.thirdWindows.map(v => statistics(v).cv), temporalEligible: covered && run.active >= POLICY.thirdsMs - 1e-6 && support.thirds.every(v => v >= POLICY.thirdValidMs - 1e-6) },
     metrics: {
-      contacts: f(m.contacts.length, "episódios", true, null, m.contacts.length),
-      efficiency: f(m.efficiency, "%", completed, "Exige conclusão do percurso."),
-      speed: f(support.validMs > 0 ? support.validDistance / (support.validMs / 1000) : null, "larguras/s", adequate, "Exige 30 s e 80% de cobertura válida.", null, "valid-input-pace-v1"),
-      cv: f(cv, "razão", adequate && support.windows.length >= 40, "Exige 30 s, 80% de cobertura, 40 janelas de 500 ms e média não nula.", support.windows.length, "smoothed-500ms-v1"),
-      low: f(m.lowMs / 1000, "s", adequate, "Exige 30 s e cobertura válida."),
-      contactsPerMinute: f(m.contactsPerMinute, "episódios/min", seconds >= 60 && adequate, "Exige 60 s e cobertura válida."),
-      recovery: f(m.recovery.median === null ? null : m.recovery.median / 1000, "s", m.recovery.valid >= 3, "Exige três recuperações completas.", m.recovery.valid),
-      contactDensity: f(m.reference > 0 ? 10 * m.contacts.length / (m.reference * run.maze.cols) : null, "contatos/10 larguras de corredor de referência", completed, "Exige percurso concluído e referência geométrica."),
+      contacts: f("collisionEpisodeCount", "Episódios de contato", contactValue, "episódios", "Contato agrupado até recuperação, interrupção ou fim; inclui episódios censurados.", true, "Episódios não disponíveis nesta definição.", contactValue),
+      wallContacts: f("wallContactCount", "Registros por parede", m.wallContactCount, "registros", "Contatos por superfície com separação mínima de 200 ms.", true, null, m.wallContactCount),
+      collisionEvents: f("collisionEventCount", "Eventos de colisão", m.collisionEventCount, "eventos", "Eventos únicos por execução e sequência; podem envolver várias paredes.", true, null, m.collisionEventCount),
+      duration: f("activeDuration", "Tempo ativo", seconds, "s", "Tempo de motor em execução, excluindo pausas."),
+      efficiency: f("graphEfficiency", "Eficiência da rota no grafo", m.efficiency, "%", "100 × distância de referência / distância percorrida no grafo. Não mede ausência de contatos nem precisão lateral.", completed, "Exige percurso concluído e distância válida no grafo."),
+      excess: f("graphExcess", "Distância excedente no grafo", m.excess, "larguras", "Distância percorrida no grafo menos referência.", completed, "Exige conclusão."),
+      backtracks: f("backtrackCount", "Retrocessos", m.backtracks?.length, "intervalos", "Intervalos de transições de células no sentido de maior distância ao objetivo."),
+      speed: f("validInputSpeed", "Velocidade média válida", support.validMs > 0 ? support.validDistance / (support.validMs / 1000) : null, "larguras/s", "Distância aceita em passos válidos / duração válida.", enough, "Exige 30 s ativos, 80% de cobertura e entrada válida.", support.windows.length),
+      cv: f("smoothedSpeedCv", "CV suavizado de 500 ms", cv, "razão", "Desvio padrão / média das velocidades em janelas válidas de 500 ms.", enough && support.windows.length >= POLICY.minWindows, "Exige 30 s ativos, 80% de cobertura, 40 janelas de 500 ms e média não nula.", support.windows.length, "smoothed-500ms-v2"),
+      low: f("lowMovementSeconds", "Baixa movimentação", m.lowMs / 1000, "s", "Soma dos intervalos de baixa movimentação em segmentos válidos.", enough, "Exige 30 s ativos e 80% de cobertura válida."),
+      contactsPerMinute: f("episodeRate", "Taxa de episódios", m.episodeRate, "episódios/min", "Episódios / minutos ativos.", run.active >= POLICY.rateMs - 1e-6, "Exige 60 s ativos e 80% de cobertura válida.", contactValue),
+      recovery: f("recoveryMedian", "Recuperação mediana", m.recovery.median == null ? null : m.recovery.median / 1000, "s", "Mediana de episódios completos; censurados excluídos.", m.recovery.valid >= POLICY.recoveries, "Exige três recuperações completas.", m.recovery.valid),
+      contactDensity: f("episodeDensity", "Densidade de episódios", contactValue !== null && m.reference > 0 ? 10 * contactValue / (m.reference * run.maze.cols) : null, "episódios/10 larguras de corredor", "10 × episódios / (referência em larguras do quadro × colunas).", completed, "Exige conclusão e referência geométrica.", contactValue),
     },
   };
 }

@@ -1,6 +1,7 @@
 "use strict";
 const { cellAt } = require("./mazes");
 const { lowMovement } = require("./low-movement");
+const { contactAnalysis } = require("./contacts");
 const mean = (a) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : null);
 function statistics(a) {
   const average = mean(a);
@@ -17,8 +18,9 @@ function quantile(a, q) {
 function analyze(run, config) {
   const steps = run.steps,
     maze = run.maze,
-    contacts = [],
-    recoveries = [],
+    contactData = contactAnalysis(run),
+    contacts = contactData.contacts,
+    recoveries = contactData.recoveries,
     low = lowMovement(validSegments(steps), config),
     backtracks = [],
     directions = [];
@@ -27,22 +29,12 @@ function analyze(run, config) {
     prior = { x: 0.5 / maze.cols, y: 0.5 / maze.rows },
     cell = 0,
     segment = -1;
-  let lastHits = new Map(),
-    recovery = null,
-    backtrack = null,
+  let backtrack = null,
     anchor = null,
     lastDirection = null;
   const speeds = [];
-  const censor = (reason) => {
-    if (recovery) {
-      recoveries.push({ ...recovery, duration: null, censored: true, reason });
-      recovery = null;
-    }
-  };
   for (const s of steps) {
     if (s.segment !== segment) {
-      censor("interruption");
-      lastHits = new Map();
       anchor = null;
       lastDirection = null;
       backtrack = null;
@@ -71,41 +63,6 @@ function analyze(run, config) {
       } else backtrack = null;
       cell = next;
     }
-    for (const wall of s.hits) {
-      if (!lastHits.has(wall) || s.t - lastHits.get(wall) >= 200) {
-        contacts.push({
-          wall,
-          t: s.t,
-          sessionTime: s.sessionTime,
-          position: { x: s.x, y: s.y },
-          cell,
-        });
-      }
-      lastHits.set(wall, s.t);
-    }
-    if (s.hits.length) {
-      if (!recovery)
-        recovery = {
-          start: s.t,
-          remaining: run.distances[cell] / maze.cols,
-          position: { x: s.x, y: s.y },
-        };
-      recovery.lastContact = s.t;
-    }
-    if (
-      recovery &&
-      !s.hits.length &&
-      s.t - recovery.lastContact >= 500 &&
-      recovery.remaining - run.distances[cell] / maze.cols >= 0.01
-    ) {
-      recoveries.push({
-        ...recovery,
-        end: s.t,
-        duration: s.t - recovery.start,
-        censored: false,
-      });
-      recovery = null;
-    }
     if (!anchor) anchor = { ...s };
     if (Math.hypot(s.x - anchor.x, s.y - anchor.y) >= 0.01) {
       const vector = { x: s.x - anchor.x, y: s.y - anchor.y };
@@ -122,7 +79,6 @@ function analyze(run, config) {
     }
     prior = s;
   }
-  censor(run.endedAt !== null ? "end" : "pending");
   const active = run.active,
     reference = run.metadata.length,
     completed = run.state === "COMPLETED";
@@ -175,7 +131,10 @@ function analyze(run, config) {
     spatial.set(key, item);
   }
   return {
-    formulaVersion: 2,
+    formulaVersion: 3,
+    ...contactData,
+    episodeRate: active ? contactData.collisionEpisodeCount / (active / 60000) : null,
+    legacyFields: { contacts: "Registros por superfície de parede; não são episódios.", contactsPerMinute: "Taxa de registros por parede, preservada para auditoria.", velocity: "Velocidades por passo do motor; CV distinto do suavizado de 500 ms." },
     activeMs: active,
     pausedMs: run.pauses.reduce(
       (v, p) => v + ((p.end ?? run.sessionNow) - p.start),

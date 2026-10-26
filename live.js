@@ -142,7 +142,7 @@ function showImported(data) {
   text("technical", JSON.stringify({ manifest: data.manifest, quality: data.report.analysis?.quality, originalImportedReport: true }, null, 2));
   text("connection", "Arquivo importado · somente leitura");
   renderReport(data.report);
-  comparison(document.getElementById("comparison-chart"), data.report.single?.length ? data.report.single.map(r => ({ ...r, label: "Exploração" })) : data.report.evaluations ?? []);
+  comparison(document.getElementById("comparison-chart"), data.report.analysis);
   results = data.runs.map(r => ({ ...r, result: r.result }));
   document.getElementById("notes").value = data.notes ?? "";
   document.getElementById("notes").disabled = true;
@@ -197,7 +197,7 @@ socket.on("snapshot", (incoming) => {
   );
   text("active", `${time(state.active)} / ${time(state.limitMs)}`);
   text("progress", `${state.metrics?.progress ?? 0}%`);
-  text("contacts", state.metrics?.contacts.length ?? 0);
+  text("contacts", state.metrics?.collisionEpisodeCount ?? "—");
   text(
     "recovery",
     state.metrics?.recovery.median != null
@@ -264,7 +264,7 @@ socket.on("snapshot", (incoming) => {
     renderReport(state.report);
     comparison(
       document.getElementById("comparison-chart"),
-      state.report.single?.length ? state.report.single.map(r => ({ ...r, label: "Exploração" })) : state.report.evaluations,
+      state.report.analysis,
     );
   }
   if (document.activeElement !== document.getElementById("notes"))
