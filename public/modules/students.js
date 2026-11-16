@@ -1,38 +1,62 @@
 import { escape as esc } from "./format.js";
-const samples = [
-  { id: "victor", name: "Victor Gabriel Ferreira Theodoro", institution: "FATEC Registro", course: "DSM — Projeto Integrador I" },
-  { id: "laura", name: "Laura Julia Mathias Amaral", institution: "FATEC Registro", course: "Desenvolvimento de Software Multiplataforma" },
-  { id: "luiz", name: "Luiz Henrique Severo Cubas", institution: "FATEC Registro", course: "Desenvolvimento de Software Multiplataforma" },
-  { id: "millie", name: "Millie Zanon Morelli Santos", institution: "FATEC Registro", course: "Desenvolvimento de Software Multiplataforma" },
-  { id: "mario", name: "Mario Armando Takahashi Martins Dias", institution: "FATEC Registro", course: "Desenvolvimento de Software Multiplataforma" },
-];
-const key = "attobrain-students";
-export function readStudents() {
-  const raw = localStorage.getItem(key);
-  if (raw === null) { localStorage.setItem(key, JSON.stringify(samples)); return samples.map(v => ({...v})); }
-  const values = JSON.parse(raw);
-  if (!Array.isArray(values) || values.some(v => !v || typeof v.id !== "string" || typeof v.name !== "string" || typeof v.institution !== "string" || (v.course !== undefined && typeof v.course !== "string"))) throw Error("Cadastros locais inválidos. Os dados originais foram preservados.");
-  return values;
+
+// Alunos vêm do servidor (MySQL). A lista fica em memória para a tela desenhar de forma simples.
+let alunos = [];
+
+async function chamar(url, opcoes = {}) {
+  const resposta = await fetch(url, {
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    ...opcoes,
+  });
+  if (resposta.status === 401) { location.href = "/login"; throw Error("Faça login para continuar."); }
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw Error(dados.erro || "Não foi possível concluir a operação.");
+  return dados;
 }
-export function saveStudent(value, id) {
-  const student = {};
-  for (const [key, max] of [["name",100],["institution",100],["course",120]]) {
-    student[key] = String(value[key] ?? "").trim();
-    if (student[key].length > max) throw Error("Campo acima do limite permitido.");
-  }
-  if (!student.name || !student.institution) throw Error("Informe nome e instituição.");
-  const list = readStudents();
-  student.id = id || crypto.randomUUID();
-  if (id && !list.some(v => v.id === id)) throw Error("Cadastro não encontrado.");
-  localStorage.setItem(key, JSON.stringify(id ? list.map(v => v.id === id ? student : v) : [...list,student]));
-  return student;
+
+export async function loadStudents() {
+  alunos = await chamar("/api/alunos");
+  return alunos;
 }
-export function removeStudent(id) {
-  localStorage.setItem(key, JSON.stringify(readStudents().filter(v => v.id !== id)));
+export const readStudents = () => alunos;
+
+export async function saveStudent(valor, id) {
+  const salvo = await chamar(id ? `/api/alunos/${id}` : "/api/alunos", { method: id ? "PUT" : "POST", body: JSON.stringify(valor) });
+  await loadStudents().catch(() => {}); // o aluno já foi salvo; se a lista não recarregar, a próxima tentativa corrige
+  return salvo;
 }
-export function studentForm(student = {}) {
-  return `<form id="student-form" class="card student-form"><h2>${student.id ? "Editar" : "Cadastrar"} aluno demonstrativo</h2><label>Nome completo<input name="name" maxlength="100" required value="${esc(student.name ?? "")}"></label><label>Instituição<input name="institution" maxlength="100" required value="${esc(student.institution ?? "FATEC Registro")}"></label><label>Curso<input name="course" maxlength="120" value="${esc(student.course ?? "")}"></label><p>Dados demonstrativos, salvos somente neste navegador.</p><div class="controls"><button type="submit">Salvar cadastro</button><button type="button" class="secondary" data-student="cancel">Cancelar</button></div><p class="field-error" role="alert" id="student-error"></p></form>`;
+export async function removeStudent(id) {
+  await chamar(`/api/alunos/${id}`, { method: "DELETE" });
+  await loadStudents().catch(() => {});
 }
-export function studentList(list, selection = false, selected = null) {
-  return list.length ? `<div class="table-wrap"><table class="result-table"><thead><tr><th>Aluno</th><th>Instituição</th><th>Ações</th></tr></thead><tbody>${list.map(v => `<tr><td>${esc(v.name)}</td><td>${esc(v.institution)}</td><td><div class="controls">${selection ? `<button class="${selected === v.id ? "" : "secondary"}" data-student="select" data-id="${esc(v.id)}">${selected === v.id ? "Selecionado" : "Selecionar"}</button>` : `<button class="secondary" data-student="edit" data-id="${esc(v.id)}">Editar</button><button class="secondary" data-student="delete" data-id="${esc(v.id)}" aria-label="Excluir ${esc(v.name)}">Excluir</button>`}</div></td></tr>`).join("")}</tbody></table></div>` : '<p class="empty-state">Nenhum aluno encontrado.</p>';
+export const loadHistory = (id) => chamar(`/api/alunos/${id}/sessoes`);
+export const participantOf = (id) => {
+  const aluno = alunos.find(v => String(v.id) === String(id));
+  return aluno ? { id: String(aluno.id), name: aluno.nome } : undefined;
+};
+
+export function studentForm(a = {}) {
+  return `<form id="student-form" class="card student-form"><h2>${a.id ? "Editar" : "Cadastrar"} aluno</h2><label>Nome completo<input name="nome" maxlength="100" required value="${esc(a.nome ?? "")}"></label><label>Data de nascimento<input name="dataNascimento" type="date" value="${esc(a.dataNascimento ?? "")}"></label><label>Escola<input name="escola" maxlength="100" value="${esc(a.escola ?? "")}"></label><label>Turma<input name="turma" maxlength="50" value="${esc(a.turma ?? "")}"></label><label>Responsável<input name="responsavel" maxlength="100" value="${esc(a.responsavel ?? "")}"></label><label>Observações<input name="observacoes" maxlength="500" value="${esc(a.observacoes ?? "")}"></label><div class="controls"><button type="submit">Salvar cadastro</button><button type="button" class="secondary" data-student="cancel">Cancelar</button></div><p class="field-error" role="alert" id="student-error"></p></form>`;
+}
+
+export function studentList(lista, selection = false, selected = null) {
+  if (!lista.length) return '<p class="empty-state">Nenhum aluno encontrado.</p>';
+  const linhas = lista.map(v => {
+    const id = esc(String(v.id));
+    const acoes = selection
+      ? `<button class="${String(selected) === String(v.id) ? "" : "secondary"}" data-student="select" data-id="${id}" aria-label="Selecionar ${esc(v.nome)}">${String(selected) === String(v.id) ? "Selecionado" : "Selecionar"}</button>`
+      : `<button class="secondary" data-student="history" data-id="${id}" aria-label="Histórico de ${esc(v.nome)}">Histórico</button><button class="secondary" data-student="edit" data-id="${id}" aria-label="Editar ${esc(v.nome)}">Editar</button><button class="secondary" data-student="delete" data-id="${id}" aria-label="Excluir ${esc(v.nome)}">Excluir</button>`;
+    return `<tr><td>${esc(v.nome)}</td><td>${esc(v.escola ?? "")}</td><td>${esc(v.turma ?? "")}</td><td><div class="controls">${acoes}</div></td></tr>`;
+  }).join("");
+  return `<div class="table-wrap"><table class="result-table"><thead><tr><th>Aluno</th><th>Escola</th><th>Turma</th><th>Ações</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+
+const motivos = { voluntary: "Encerrada pelo profissional", technical: "Problema técnico", "session-limit": "Limite de tempo" };
+export function historyPage(aluno, sessoes) {
+  const linhas = sessoes.map(s => `<tr><td>${esc(new Date(s.realizadaEm).toLocaleString("pt-BR"))}</td><td>${esc(s.nivel ?? "-")}</td><td>${esc(String(s.fasesConcluidas))}</td><td>${esc(String(s.tempoAtivoSeg))} s</td><td>${esc(String(s.totalColisoes))}</td><td>${esc(motivos[s.motivoFim] ?? "-")}</td></tr>`).join("");
+  const tabela = sessoes.length
+    ? `<div class="table-wrap"><table class="result-table"><thead><tr><th>Data</th><th>Nível</th><th>Fases concluídas</th><th>Tempo ativo</th><th>Colisões</th><th>Encerramento</th></tr></thead><tbody>${linhas}</tbody></table></div>`
+    : '<p class="empty-state">Este aluno ainda não tem sessões registradas.</p>';
+  return `<section class="card"><div class="section-heading"><h2>Histórico de ${esc(aluno?.nome ?? "aluno")}</h2><button class="secondary" data-student="cancel">Voltar</button></div>${tabela}</section>`;
 }

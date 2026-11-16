@@ -23,6 +23,22 @@
         (student ? "Área do aluno" : "Área do profissional") +
         "</div>";
       document.body.prepend(sidebar);
+      if (!student && live) {
+        const footer = sidebar.querySelector(".menu-footer");
+        fetch("/api/me", { credentials: "same-origin" }).then((r) => {
+          if (r.status === 401) location.href = "/login";
+          return r.ok ? r.json() : null;
+        }).then((me) => {
+          if (!me) return;
+          footer.textContent = me.nome + " ";
+          const sair = document.createElement("button");
+          sair.type = "button";
+          sair.className = "secondary";
+          sair.textContent = "Sair";
+          sair.onclick = () => fetch("/api/logout", { method: "POST", credentials: "same-origin" }).catch(() => {}).finally(() => { location.href = "/login"; });
+          footer.append(sair);
+        }).catch(() => {});
+      }
     }
     if (!live) {
       const nav = sidebar.querySelector("nav");

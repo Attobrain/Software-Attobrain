@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Attobrain • Entrar</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/public/modules/styles/login.css" />
+    <script src="/public/modules/login.js" type="module"></script>
+  </head>
+  <body class="login-page">
+    <main class="login-card">
+      <img src="/assets/attobrain-logo.svg" alt="Attobrain" class="login-logo" />
+      <h1>Área do profissional</h1>
+      <p>Entre para acompanhar seus alunos e as sessões do labirinto.</p>
+      <form id="login-form">
+        <label>E-mail<input name="email" type="email" autocomplete="username" required /></label>
+        <label>Senha<input name="senha" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Entrar</button>
+        <p id="login-erro" role="alert"></p>
+      </form>
+    </main>
+  </body>
+</html>

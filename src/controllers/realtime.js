@@ -11,6 +11,8 @@ function attach(
     clock = () => performance.now(),
     eeg = true,
     logger = () => {},
+    requireLogin = false,
+    onSessionEnd = null,
   } = {},
 ) {
   const cursors = new Map(),
@@ -25,6 +27,13 @@ function attach(
           channels: b.channels.map((a) => Array.from(a)),
         })),
       );
+  };
+  // Avisa o servidor quando a sessão fecha (uma vez). Observações novas depois de fechada
+  // pedem uma atualização (atualizar = true).
+  const salvarResumo = (s, atualizar = false) => {
+    if (!onSessionEnd || !s.closed || (s.resumoSalvo && !atualizar)) return;
+    s.resumoSalvo = true;
+    onSessionEnd(s);
   };
   const full = (s) => {
     for (const role of ["professional", "student"]) {
@@ -57,6 +66,7 @@ function attach(
       if (!request || typeof request !== "object")
         throw Error("Requisição inválida.");
       if (request.create === true) {
+        if (requireLogin && !socket.request.session?.profissionalId) throw Error("Faça login para iniciar uma sessão.");
         const address = socket.handshake.address,
           now = clock(),
           times = (limits.get(address) || []).filter((t) => now - t < 60000);
@@ -70,6 +80,7 @@ function attach(
           if (existing.professional && existing.professional !== socket.id) throw Error("Esta sessão já está aberta em outra tela profissional.");
         }
         session = repository.create(now, request.creationToken, true);
+        session.profissionalId = socket.request.session?.profissionalId ?? null;
         role = "professional";
       } else {
         const candidate = repository.sessions.get(request.id);
@@ -148,6 +159,7 @@ function attach(
         session.commands.delete(session.commands.keys().next().value);
       reply(result);
       full(session);
+      salvarResumo(session, request.type === "notes");
     });
     safe("preview", (request, reply) => {
       if (!session || role !== "professional" || session.current || session.closed) throw Error("Prévia indisponível.");
@@ -197,6 +209,7 @@ function attach(
     for (const s of repository.sessions.values()) {
       const before = s.events.length;
       s.tick(now);
+      salvarResumo(s);
       if (s.closed && s.worker && !s.eegFinishing) {
         s.eegFinishing = true;
         s.worker.finish(s.time);

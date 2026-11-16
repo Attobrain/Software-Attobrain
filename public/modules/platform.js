@@ -1,12 +1,12 @@
 import { escape as esc } from "./format.js";
-import { readStudents, saveStudent, removeStudent, studentForm, studentList } from "./students.js";
+import { loadStudents, readStudents, saveStudent, removeStudent, studentForm, studentList, loadHistory, historyPage, participantOf } from "./students.js";
 import { drawBoard } from "./board.js";
 import { interpretationView } from "./interpretation-view.js";
 import { createReportTabs } from "./report-tabs.js";
 
 export function createPlatform({ connect, command, state, credentials, socket, message, timeline, showImported, restoreLive, newSession }) {
   const page = document.getElementById("platform-view"), session = document.getElementById("session-view");
-  let editId = null, creating = false, selected = null, returnToFlow = false, renderKey = "", previewTimer, pending = false, imported = null, previews = [];
+  let historyOf = null, historyRows = [], editId = null, creating = false, selected = null, returnToFlow = false, renderKey = "", previewTimer, pending = false, imported = null, previews = [];
   const technical = document.createElement("details");
   technical.id = "technical-panel"; technical.className = "card technical-panel";
   technical.innerHTML = '<summary>Linha do tempo e demonstração técnica</summary>';
@@ -36,8 +36,8 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   }
   function studentsPage(selection = false) {
     const list = readStudents();
-    const continuation = selection ? `<button id="confirm-participant" data-flow="participant" ${list.some(v => v.id === selected) ? "" : "disabled"}>Confirmar aluno e continuar →</button>` : "";
-    return `${selection ? "" : heading("Alunos", "Cadastros demonstrativos salvos somente neste navegador.")}<section class="card student-picker"><div class="section-heading"><h2>${selection ? "Quem vai participar?" : "Cadastros demonstrativos"}</h2><button class="secondary" data-student="create">Cadastrar aluno</button></div><label class="student-search">Buscar aluno<input id="student-search" type="search" placeholder="Nome ou instituição" autocomplete="off"></label><div id="student-rows">${studentList(list, selection, selected)}</div><p id="student-selected" role="status">${selection ? "Selecione e confirme o aluno para continuar." : `${list.length} cadastro(s) neste navegador.`}</p>${continuation}</section>`;
+    const continuation = selection ? `<button id="confirm-participant" data-flow="participant" ${list.some(v => String(v.id) === String(selected)) ? "" : "disabled"}>Confirmar aluno e continuar →</button>` : "";
+    return `${selection ? "" : heading("Alunos", "Cadastre e consulte os alunos acompanhados por você.")}<section class="card student-picker"><div class="section-heading"><h2>${selection ? "Quem vai participar?" : "Alunos cadastrados"}</h2><button class="secondary" data-student="create">Cadastrar aluno</button></div><label class="student-search">Buscar aluno<input id="student-search" type="search" placeholder="Nome ou escola" autocomplete="off"></label><div id="student-rows">${studentList(list, selection, selected)}</div><p id="student-selected" role="status">${selection ? "Selecione e confirme o aluno para continuar." : `${list.length} aluno(s) cadastrado(s).`}</p>${continuation}</section>`;
   }
   function steps(s) {
     const list = s.config.mode === "single" ? [["participant", "Aluno"], ["configuration", "Configuração"], ["review", "Revisão"], ["activity", "Atividade"]] : [["participant", "Aluno"], ["configuration", "Configuração"], ["review", "Revisão"], ["training", "Treino"], ["A", "A"], ["B", "B"], ["C", "C"]];
@@ -84,8 +84,9 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     }
     if (platformPage) {
       technical.hidden = true;
-      if (current === "overview") page.innerHTML = `${heading("Painel de demonstração", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice"><strong>Um ambiente de demonstração científica</strong><p>Interações do mouse são observadas durante o labirinto. O EEG é sintético; não há captura de sinais cerebrais ou diagnóstico.</p></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Organize os cadastros demonstrativos deste navegador.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto visual</h2><p>Uma preparação guiada, com treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Revisar um resultado exportado</h2><p>Abra um JSON v2, v3 ou v4 para inspeção local, sem modificar uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório JSON</button></section>`;
-      else if (creating || editId) page.innerHTML = `${heading("Cadastro demonstrativo", "Sem banco de dados. As alterações ficam neste navegador.")}${studentForm(editId ? readStudents().find(v => v.id === editId) : {})}`;
+      if (current === "overview") page.innerHTML = `${heading("Painel do profissional", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice"><strong>Um ambiente de demonstração científica</strong><p>Interações do mouse são observadas durante o labirinto. O EEG é sintético; não há captura de sinais cerebrais ou diagnóstico.</p></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Cadastre seus alunos e consulte o histórico de sessões de cada um.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto visual</h2><p>Uma preparação guiada, com treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Revisar um resultado exportado</h2><p>Abra um JSON v2, v3 ou v4 para inspeção local, sem modificar uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório JSON</button></section>`;
+      else if (creating || editId) page.innerHTML = `${heading("Cadastro de aluno", "Os dados ficam salvos no banco de dados do sistema.")}${studentForm(editId ? readStudents().find(v => String(v.id) === String(editId)) : {})}`;
+      else if (historyOf) page.innerHTML = `${heading("Histórico do aluno", "Resumo das sessões do labirinto já encerradas.")}${historyPage(readStudents().find(v => String(v.id) === String(historyOf)), historyRows)}`;
       else page.innerHTML = studentsPage();
       return;
     }
@@ -164,17 +165,22 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   document.addEventListener("input", event => {
     if (event.target.id !== "student-search") return;
     const query = event.target.value.toLocaleLowerCase("pt-BR");
-    document.getElementById("student-rows").innerHTML = studentList(readStudents().filter(v => `${v.name} ${v.institution}`.toLocaleLowerCase("pt-BR").includes(query)), route() === "session", selected);
+    document.getElementById("student-rows").innerHTML = studentList(readStudents().filter(v => `${v.nome} ${v.escola ?? ""}`.toLocaleLowerCase("pt-BR").includes(query)), route() === "session", selected);
   });
-  document.addEventListener("submit", event => {
+  document.addEventListener("submit", async event => {
     if (event.target.id !== "student-form") return;
     event.preventDefault();
+    const salvar = event.target.querySelector('button[type="submit"]');
+    salvar.disabled = true; // evita cadastro duplicado por clique duplo
     try {
-      const value = saveStudent(Object.fromEntries(new FormData(event.target)), editId);
+      const value = await saveStudent(Object.fromEntries(new FormData(event.target)), editId);
       creating = false; editId = null; selected = value.id;
       if (returnToFlow) { returnToFlow = false; navigate("session"); }
       else show();
-    } catch (error) { document.getElementById("student-error").textContent = error.message; }
+    } catch (error) {
+      document.getElementById("student-error").textContent = error.message;
+      salvar.disabled = false;
+    }
   });
   document.addEventListener("click", event => {
     const anchor = event.target.closest('a[href="#timeline"], a[href="#diagnostics"]');
@@ -202,13 +208,14 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       }
       if (button.dataset.student) {
         const action = button.dataset.student;
-        if (action === "select") { selected = button.dataset.id; document.getElementById("confirm-participant").disabled = false; document.getElementById("student-selected").textContent = `Selecionado: ${readStudents().find(v => v.id === selected).name}`; }
+        if (action === "select") { selected = button.dataset.id; document.getElementById("confirm-participant").disabled = false; document.getElementById("student-selected").textContent = `Selecionado: ${readStudents().find(v => String(v.id) === String(selected)).nome}`; }
         if (action === "create" || action === "edit") { returnToFlow = route() === "session"; editId = action === "edit" ? button.dataset.id : null; creating = true; navigate("students"); }
-        if (action === "delete" && confirm("Excluir este cadastro demonstrativo do navegador? Sessões já registradas preservam sua identificação.")) { removeStudent(button.dataset.id); show(); }
-        if (action === "cancel") { creating = false; editId = null; navigate(returnToFlow ? "session" : "students"); returnToFlow = false; }
+        if (action === "delete" && confirm("Excluir este aluno? O histórico de sessões dele também será apagado.")) removeStudent(button.dataset.id).then(() => { if (String(selected) === String(button.dataset.id)) selected = null; show(); }).catch(error => message(error.message));
+        if (action === "history") loadHistory(button.dataset.id).then(rows => { historyOf = button.dataset.id; historyRows = rows; renderKey = ""; show(); }).catch(error => message(error.message));
+        if (action === "cancel") { creating = false; editId = null; historyOf = null; navigate(returnToFlow ? "session" : "students"); returnToFlow = false; }
       }
       const action = button.dataset.flow;
-      if (action === "participant") attempt("select-participant", { participant: readStudents().find(v => v.id === selected) });
+      if (action === "participant") attempt("select-participant", { participant: participantOf(selected) });
       if (action === "back") attempt("back", { step: button.dataset.step });
       if (action === "begin") attempt("begin");
       if (action === "reanalyze") attempt("reanalyze");
@@ -219,7 +226,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       if (action === "technical") { technical.open = !technical.open; if (technical.open) technical.scrollIntoView({ behavior: "instant" }); }
     } catch (error) { message(error.message); }
   });
-  window.addEventListener("hashchange", () => { renderKey = ""; try { show(); } catch (error) { message(error.message); } });
+  window.addEventListener("hashchange", () => { renderKey = ""; historyOf = null; try { show(); } catch (error) { message(error.message); } });
   window.addEventListener("attobrain-import", event => {
     try {
       const original = event.detail;
@@ -238,6 +245,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     } catch (error) { message(`Arquivo incompatível: ${error.message}`); }
   });
   try { show(); } catch (error) { message(error.message); }
+  loadStudents().then(() => { renderKey = ""; show(); }).catch(error => message(error.message));
   return {
     update(previous) {
       if (!imported && state()?.closed && !previous?.closed) navigate("results");

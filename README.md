@@ -25,27 +25,42 @@ O sistema é uma demonstração de software. O mouse não rastreia os olhos, o E
 
 ### Requisitos
 
-- Node.js 22 ou superior.
-- npm.
+- Node.js 22 ou superior + npm.
+- XAMPP com o MySQL ligado (painel do XAMPP → Start no MySQL).
 - Navegador moderno com suporte a Canvas e Socket.IO.
 
-### Instalação e execução
+### Executar localmente com XAMPP (login + banco de dados)
 
-Na raiz do repositório:
+1. No painel do XAMPP, inicie o **MySQL** e abra o phpMyAdmin (`http://localhost/phpmyadmin`).
+2. Na aba **Importar**, escolha o arquivo `sql/attobrain.sql` e execute. Ele cria o banco `attobrain`, as tabelas e um profissional de demonstração.
+3. Copie `.env.example` para `.env` (os valores já são os padrão do XAMPP: usuário `root`, senha vazia).
+4. No terminal:
 
 ```sh
 npm ci
-npm start
+npm run start:xampp
 ```
+
+Acesse `http://localhost:3000/login` e entre com o profissional de demonstração:
+
+- e-mail: `profissional@attobrain.com`
+- senha: `attobrain123`
+
+Para zerar o banco, importe `sql/attobrain.sql` de novo (apague antes o banco `attobrain` no phpMyAdmin). O desenho das tabelas está em [docs/BANCO.md](docs/BANCO.md).
+
+`npm start` (sem `.env`) roda **sem banco e sem login**; é o modo usado pelos testes automáticos.
+
+**Limitações conhecidas do login (protótipo acadêmico):** a sessão do profissional fica na memória do servidor (reiniciar o Node exige novo login); não há limite de tentativas de senha nem cadastro de novos profissionais (o profissional vem do `sql/attobrain.sql`; troque a senha de demonstração fora da apresentação); o login funciona na mesma origem (`http://localhost:3000`), então o front estático da Vercel não faz login sozinho. Se a sessão do labirinto terminar pelo cronômetro ou pela última fase, o resumo também é gravado; observações escritas depois atualizam a mesma linha de `sessoes`.
 
 O servidor local inicia na porta `3000`. Acesse:
 
-- `http://localhost:3000/` — painel inicial.
-- `http://localhost:3000/profissional` — fluxo de preparação, controle e resultados.
-- `http://localhost:3000/aluno` — tela do participante, aberta pelo link temporário da sessão.
+- `http://localhost:3000/login` — entrada do profissional.
+- `http://localhost:3000/` — painel inicial (exige login).
+- `http://localhost:3000/profissional` — fluxo de preparação, controle e resultados (exige login).
+- `http://localhost:3000/aluno` — tela do participante, aberta pelo link temporário da sessão (não exige login).
 - `http://localhost:3000/api/protocol` — catálogo JSON do protocolo e dos comandos disponíveis.
 
-O painel inicial não cria uma sessão por conta própria. Entre em **Labirinto**, escolha um aluno demonstrativo e siga a preparação. Cadastros de demonstração ficam no `localStorage` do navegador e não são banco de dados.
+Fluxo de uso: entrar → **Alunos** (cadastrar, editar, excluir, ver histórico) → **Labirinto** (escolher o aluno e conduzir a sessão). Ao encerrar a sessão, um resumo simples (nível, fases concluídas, tempo ativo, colisões) é salvo no banco e aparece no **Histórico** do aluno.
 
 ### Apresentar com duas telas
 
@@ -161,7 +176,7 @@ A impressão prioriza resumo, observações, comparação elegível, limitaçõe
 - A credencial profissional protege exportação e inspeção temporal. Credenciais não entram nos JSON exportados nem nos logs estruturados do servidor.
 - O servidor recebe do aluno a entrada do mouse e presença/visibilidade da tela. Não há câmera, rastreador ocular, sensor EEG real ou integração de hardware.
 - O aluno recebe somente a projeção destinada à sua tela; informações profissionais e resultados são isolados.
-- O protótipo local não oferece login institucional, prontuário, armazenamento clínico, criptografia de banco, autorização organizacional, alta disponibilidade ou escala de produção.
+- O login é simples (e-mail e senha com hash bcrypt, sessão por cookie) e serve a este projeto acadêmico. O protótipo não oferece prontuário, armazenamento clínico, criptografia de banco, autorização organizacional, alta disponibilidade ou escala de produção.
 - Não é um instrumento validado, não diagnostica TDAH ou desatenção e não compara o participante a normas clínicas.
 - Equivalência de geometria do labirinto não garante equivalência de dificuldade humana.
 
@@ -189,9 +204,15 @@ Aplicação sem framework de frontend, em JavaScript, Node.js, HTML e CSS. Socke
 | `scripts/verify-protocol.js` | Execução automatizada reproduzível do protocolo completo ou parcial. |
 | `src/tests/` | Testes de domínio, interpretação, exportação, importação, interfaces e sinais. |
 
-Dados de aluno demonstrativo são mantidos pelo navegador na chave `attobrain-students` do `localStorage`. O servidor não usa esse armazenamento como banco e guarda apenas o mínimo necessário para a sessão atual.
+Alunos e o resumo das sessões ficam no MySQL (`sql/`, `src/db.js`, `src/routes/`). Os dados detalhados do labirinto continuam só na memória da sessão ativa e no JSON exportado.
 
 ## API e comunicação
+
+Rotas de login e cadastro (cookie de sessão; a API de alunos responde `401` sem login e cada profissional enxerga só os próprios alunos):
+
+- `POST /api/login`, `POST /api/logout`, `GET /api/me`
+- `GET /api/alunos`, `GET /api/alunos/:id`, `POST /api/alunos`, `PUT /api/alunos/:id`, `DELETE /api/alunos/:id`
+- `GET /api/alunos/:id/sessoes` — histórico de sessões do aluno.
 
 `GET /api/protocol` publica o catálogo real de transportes, eventos, comandos, defaults e formatos HTTP. O transporte em tempo real usa Socket.IO via WebSocket: mesma origem localmente ou servidor HTTPS configurado na publicação. O fluxo cria ou restaura uma sessão e associa uma credencial ao papel profissional ou aluno. Comandos profissionais incluem `commandId` e `expectedRevision`; entradas do aluno incluem `runId`, sequência, coordenadas normalizadas e estado dentro/fora do quadro. A presença periódica informa se a página do aluno está visível.
 

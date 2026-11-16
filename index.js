@@ -8,6 +8,12 @@ const { Server } = require("socket.io");
 const { attach } = require("./realtime");
 const { SessionRepository } = require("./src/repositories/sessions");
 const { protocolDescription } = require("./src/types/protocol");
+const express = require("express");
+const session = require("express-session");
+const { criarPool } = require("./src/db");
+const { rotasAuth } = require("./src/routes/auth");
+const { rotasAlunos } = require("./src/routes/alunos");
+const { resumoSessao } = require("./src/services/resumo-sessao");
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -24,7 +30,8 @@ function createApplication(options = {}) {
     catch { return false; }
   }
   const repository = options.repository ?? new SessionRepository();
-  const server = http.createServer(async (req, res) => {
+  const db = options.db !== undefined ? options.db : criarPool();
+  const handler = async (req, res) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader("X-Frame-Options", "DENY");
@@ -90,8 +97,10 @@ function createApplication(options = {}) {
       if (["/", "/profissional", "/aluno"].includes(route))
         route = "/live.html";
       if (route === "/legado") route = "/index.html";
+      if (route === "/login") route = "/login.html";
       const allowed =
         [
+          "/login.html",
           "/navigation.js",
           "/runtime-config.js",
           "/live.html",
@@ -140,7 +149,40 @@ function createApplication(options = {}) {
       res.writeHead(error.code === "ENOENT" ? 404 : 400);
       res.end("Requisição inválida.");
     }
+  };
+  const app = express();
+  app.disable("x-powered-by");
+  const segredo = options.sessionSecret ?? process.env.SESSION_SECRET;
+  if (db && !segredo && process.env.NODE_ENV === "production") throw Error("Defina SESSION_SECRET para usar o login em produção.");
+  const sessaoLogin = session({
+    secret: segredo ?? "attobrain-dev-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, sameSite: "lax", maxAge: 8 * 60 * 60 * 1000 },
   });
+  if (db) {
+    app.use(sessaoLogin);
+    app.use("/api", (req, res, next) => {
+      if (req.headers.origin && !originAllowed(req)) return res.status(403).json({ erro: "Origem não autorizada." });
+      next();
+    });
+    app.use("/api", express.json({ limit: "10kb" }));
+    app.use("/api", rotasAuth(db));
+    app.use("/api/alunos", rotasAlunos(db));
+    app.use("/api", (erro, req, res, next) => {
+      if (res.headersSent) return next(erro);
+      if (erro.type === "entity.parse.failed") return res.status(400).json({ erro: "JSON inválido." });
+      console.log(JSON.stringify({ level: "error", event: "erro-api", reason: erro.message }));
+      res.status(500).json({ erro: "Erro interno. Tente novamente." });
+    });
+    app.use((req, res, next) => {
+      const rota = req.path;
+      if (req.method === "GET" && (rota === "/" || rota === "/profissional") && !req.session.profissionalId) return res.redirect("/login");
+      next();
+    });
+  }
+  app.use(handler);
+  const server = http.createServer(app);
   const io = new Server(server, {
     cors: { origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)), methods: ["GET", "POST"] },
     maxHttpBufferSize: 16384,
@@ -148,7 +190,34 @@ function createApplication(options = {}) {
       callback(null, originAllowed(req));
     },
   });
-  const stop = attach(io, { repository, ...options });
+  if (db) io.engine.use(sessaoLogin);
+  // Grava o resumo da sessão em "sessoes". Se as observações mudarem depois (a sessão já
+  // salva), apenas atualiza a linha existente. As chamadas entram numa fila para não duplicar.
+  const gravarSessao = async (s) => {
+    const alunoId = Number(s.participant?.id);
+    if (!s.profissionalId || !Number.isInteger(alunoId)) return;
+    try {
+      const r = resumoSessao(s);
+      if (s.sessaoId) {
+        await db.query("UPDATE sessoes SET observacoes = ? WHERE id = ? AND profissional_id = ?", [r.observacoes, s.sessaoId, s.profissionalId]);
+        return;
+      }
+      const [resultado] = await db.query(
+        `INSERT INTO sessoes (aluno_id, profissional_id, nivel, fases_concluidas, tempo_ativo_seg, total_colisoes, motivo_fim, observacoes)
+         SELECT id, profissional_id, ?, ?, ?, ?, ?, ? FROM alunos WHERE id = ? AND profissional_id = ?`,
+        [r.nivel, r.fasesConcluidas, r.tempoAtivoSeg, r.totalColisoes, r.motivoFim, r.observacoes, alunoId, s.profissionalId],
+      );
+      if (!resultado.affectedRows) console.log(JSON.stringify({ level: "warn", event: "sessao-sem-aluno", alunoId }));
+      else s.sessaoId = resultado.insertId;
+    } catch (erro) {
+      console.log(JSON.stringify({ level: "error", event: "salvar-sessao-falhou", reason: erro.message }));
+    }
+  };
+  const salvarSessao = (s) => {
+    if (!db) return;
+    s.filaGravacao = (s.filaGravacao ?? Promise.resolve()).then(() => gravarSessao(s));
+  };
+  const stop = attach(io, { repository, requireLogin: !!db, onSessionEnd: salvarSessao, ...options });
   return {
     server,
     io,
@@ -156,6 +225,7 @@ function createApplication(options = {}) {
     close: async () => {
       await stop();
       await new Promise((resolve) => io.close(resolve));
+      if (db && options.db === undefined) await db.end();
     },
   };
 }
