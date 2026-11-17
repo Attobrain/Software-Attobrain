@@ -26,7 +26,7 @@ const references = [
 const concepts = [
   {
     title: "Percurso visual demonstrativo",
-    text: "A pessoa percorre um labirinto enquanto a interface demonstra como uma trajetória visual poderia ser apresentada. A entrada atual é provisória e não corresponde a uma leitura ocular.",
+    text: "A pessoa percorre um labirinto enquanto a interface apresenta uma demonstração visual de controle pelo olhar. A integração com rastreamento ocular está em desenvolvimento.",
   },
   {
     title: "Medidas com contexto",
@@ -74,7 +74,7 @@ export function projectProfileView() {
   <div class="project-profile">
     <section class="platform-notice" aria-labelledby="project-purpose-title">
       <strong id="project-purpose-title">Um protótipo para futuras camadas de leitura</strong>
-      <p>O MVP demonstra um percurso em labirinto e uma interface preparada para receber, no futuro, rastreamento ocular e sinais neurofisiológicos. Hoje, a trajetória usa uma entrada provisória e o sinal avançado é gerado por software; nenhum sensor ocular ou neural está conectado.</p>
+      <p>O MVP demonstra um percurso em labirinto e antecipa uma interface de controle pelo olhar. A integração com rastreamento ocular ainda está em desenvolvimento; o sinal neurofisiológico avançado é gerado por software.</p>
     </section>
 
     <section class="card project-section" aria-labelledby="project-concepts-title">
@@ -91,7 +91,7 @@ export function projectProfileView() {
     <section class="card project-section" aria-labelledby="project-boundaries-title">
       <div class="section-heading"><div><span class="eyebrow">ESCOPO E LIMITES</span><h2 id="project-boundaries-title">Demonstração acadêmica, sem uso clínico</h2></div></div>
       <ul class="project-boundaries">
-        <li>A trajetória usa uma entrada provisória para demonstrar o fluxo; não é rastreamento ocular.</li>
+        <li>A trajetória desta demonstração não corresponde a uma leitura de rastreamento ocular.</li>
         <li>Foco visual e atividade cerebral aparecem apenas como conceitos visuais ou sinais sintéticos, não como medições do participante.</li>
         <li>Os resultados descrevem registros da atividade. Não diagnosticam TDAH, não atribuem atenção e não comparam participantes com uma população normativa.</li>
         <li>Os critérios do MVP são parâmetros de engenharia, sem validação clínica ou psicométrica.</li>

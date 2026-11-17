@@ -68,7 +68,7 @@ test("mensagens do aluno são neutras e não expõem dados profissionais", async
   assert(studentMessage({ state: "TIMED_OUT" }).title.includes("terminou"));
   assert(
     studentMessage({ state: "RUNNING", phase: "INTERVAL" }).title.includes(
-      "descansar",
+      "próxima atividade",
     ),
   );
   assert(studentMessage({ closed: true }).title.includes("terminamos"));

@@ -1,4 +1,4 @@
-import { escape as esc, number, time, labels } from "./format.js";
+import { escape as esc, number, time, labels, sourceLabel } from "./format.js";
 import { metricValue } from "./interpretation-view.js";
 const row = (name, value) => `<tr><th>${name}</th><td>${esc(value)}</td></tr>`;
 export function metricDetails(m) {
@@ -47,7 +47,7 @@ export function metricDetails(m) {
 }
 export function renderReport(report) {
   if (!report) return;
-  document.getElementById("metric-catalog").innerHTML=(report.analysis?.features??[]).map(f=>`<details><summary>Como cada número é calculado · ${esc(f.label)}</summary>${Object.values(f.metrics).map(m=>`<article class="metric-definition"><h4>${esc(m.name??m.id??"Métrica histórica")}</h4><p>${metricValue(m,true)} · ${esc(m.eligibility)} · ${esc(m.reason??"Critério atendido")}</p><p>${esc(m.definition??"Definição histórica preservada no arquivo original.")}</p><small>Definição ${esc(m.definitionVersion)} · fonte ${esc(m.source??"arquivo histórico")} · suporte ${esc(m.supportCount??"não informado")}</small><p>${(m.limitations??[]).map(esc).join(" ")}</p></article>`).join("")}</details>`).join("")||"<p>Esta versão do relatório não traz a explicação dos cálculos.</p>";
+  document.getElementById("metric-catalog").innerHTML=(report.analysis?.features??[]).map(f=>`<details><summary>Como cada número é calculado · ${esc(f.label)}</summary>${Object.values(f.metrics).map(m=>`<article class="metric-definition"><h4>${esc(m.name??m.id??"Métrica histórica")}</h4><p>${metricValue(m,true)} · ${esc(m.eligibility)} · ${esc(m.reason??"Critério atendido")}</p><p>${esc(m.definition??"Definição histórica preservada no arquivo original.")}</p><small>Definição ${esc(m.definitionVersion)} · fonte ${esc(sourceLabel(m.source??"arquivo histórico"))} · suporte ${esc(m.supportCount??"não informado")}</small><p>${(m.limitations??[]).map(esc).join(" ")}</p></article>`).join("")}</details>`).join("")||"<p>Esta versão do relatório não traz a explicação dos cálculos.</p>";
   const evaluations = report.single?.length ? report.single.map(r => ({ ...r, label: "Exploração" })) : report.evaluations;
   document.getElementById("report-description").textContent =
     report.description;

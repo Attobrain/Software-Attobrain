@@ -1,8 +1,8 @@
 # Attobrain
 
-MVP acadêmico da Attobrain para apresentar uma atividade de labirinto com acompanhamento em duas telas e um perfil explicável da sessão. O participante percorre um labirinto usando o mouse como controle de entrada; o profissional acompanha a atividade e consulta os registros gerados pelo software.
+MVP acadêmico da Attobrain para apresentar uma atividade de labirinto com acompanhamento em duas telas e um perfil explicável da sessão. O participante percorre o labirinto em uma demonstração visual de controle pelo olhar; o profissional acompanha a atividade e consulta os registros gerados pelo software.
 
-O sistema é um protótipo demonstrativo. A entrada do labirinto é provisória, o EEG é inteiramente sintético e as métricas descrevem somente o percurso. Não há câmera, rastreador ocular ou sensor cerebral conectado; o sistema não mede atenção nem faz diagnóstico. O MySQL guarda cadastros e resumos de sessão, enquanto trajetórias, eventos e sinais detalhados permanecem em memória até a exportação.
+O controle ocular ainda é uma demonstração, o EEG é inteiramente sintético e as métricas descrevem somente o percurso. Não há sensores conectados; o sistema não mede atenção nem faz diagnóstico. O MySQL guarda cadastros e resumos de sessão, enquanto trajetórias, eventos e sinais detalhados permanecem em memória até a exportação.
 
 ## Índice
 
@@ -78,7 +78,7 @@ Para dois dispositivos na mesma rede, abra `/profissional` no computador servido
 | Participante demonstrativo | Permite selecionar um cadastro local no navegador. O servidor congela somente o identificador, nome e indicação de demonstração usados na sessão. |
 | Preparação | Valida participante e configuração, apresenta uma prévia dos labirintos e confirma parâmetros antes de abrir a atividade. |
 | Tela do profissional | Controla conexão, preparação, iniciar, pausar, retomar, avançar, interromper e consultar o perfil da sessão. |
-| Tela do aluno | Mostra espera, instruções, labirinto, marcador, pausa e conclusão. A entrada do mouse representa um alvo de controle, não o olhar. |
+| Tela do aluno | Mostra espera, instruções, labirinto, marcador, pausa e conclusão. A interação apresenta uma demonstração visual do controle pelo olhar. |
 | Sessão ao vivo | Sincroniza estado, trajetória e eventos entre navegador do profissional, navegador do aluno e servidor com Socket.IO. |
 | Perfil de resultados | Apresenta resumo, comparação, evidências e dados técnicos em abas navegáveis por teclado. |
 | EEG sintético | Demonstra canais e processamento de sinais artificiais em área técnica recolhida. Não participa dos resultados comportamentais. |
@@ -117,11 +117,11 @@ As abas respondem a setas esquerda/direita, `Home` e `End`. Cada observação pe
 
 O servidor gera e guarda a geometria e a semente de cada execução. Os níveis guiados disponíveis são 7×7 e 10×10, além da opção fixa padrão do protocolo. As atividades A/B/C usam um conjunto versionado; exploração permite semente livre. A prévia reutiliza o gerador da execução.
 
-O navegador do aluno acompanha a posição do mouse dentro da área do labirinto e envia coordenadas normalizadas. O servidor trata essas coordenadas como alvo: move um marcador com velocidade limitada, aplica raio, paredes, subpassos e colisão por eixo, permitindo deslizar junto às paredes. Sair do quadro interrompe o movimento; voltar fornece outro alvo sem teletransporte. A chegada só é confirmada quando o marcador controlado pelo servidor alcança a saída.
+O navegador do aluno acompanha a posição do controle visual simulado dentro da área do labirinto e envia coordenadas normalizadas. O servidor trata essas coordenadas como alvo: move um marcador com velocidade limitada, aplica raio, paredes, subpassos e colisão por eixo, permitindo deslizar junto às paredes. Sair do quadro interrompe o movimento; voltar fornece outro alvo sem teletransporte. A chegada só é confirmada quando o marcador controlado pelo servidor alcança a saída.
 
 Parâmetros atuais do motor: quadro lógico quadrado, velocidade de `0,25` largura do quadro por segundo, raio do marcador de `0,01`, parede de `0,005`, motor a 60 passos por segundo e envio de entrada/estado até 20 vezes por segundo. Entrada sem atualização por 500 ms interrompe o movimento; falha prolongada pausa a atividade. Esses números são parâmetros de engenharia do protótipo, não calibração humana.
 
-O registro mantém separadamente entrada do mouse/alvo e trajetória aceita do marcador. Inclui checkpoints, distâncias, pausas, tempos, direção, colisões, eventos e horários ativos/de sessão. A geração e aquisição são determinísticas a partir da configuração e semente registradas.
+O registro mantém separadamente a entrada recebida, o alvo de controle e a trajetória aceita do marcador. Inclui checkpoints, distâncias, pausas, tempos, direção, colisões, eventos e horários ativos/de sessão. A geração e aquisição são determinísticas a partir da configuração e semente registradas.
 
 ## Resultados e interpretação
 
@@ -176,7 +176,7 @@ A impressão prioriza resumo, observações, comparação elegível, limitaçõe
 - Cadastros de alunos e resumos das sessões ficam no MySQL. Trajetórias, eventos e dados detalhados permanecem na memória enquanto a sessão está ativa e no JSON exportado; reiniciar o servidor elimina os dados detalhados que não tenham sido exportados.
 - São aceitas até quatro sessões simultâneas e até 30 minutos de execução total por sessão. Sessões sem conexão são removidas após 30 minutos.
 - A credencial profissional protege exportação e inspeção temporal. Credenciais não entram nos JSON exportados nem nos logs estruturados do servidor.
-- O servidor recebe do aluno a entrada do mouse e presença/visibilidade da tela. Não há câmera, rastreador ocular, sensor EEG real ou integração de hardware.
+- O servidor recebe a entrada demonstrativa e a presença/visibilidade da tela do aluno. A integração com rastreamento ocular e EEG ainda está em desenvolvimento.
 - O aluno recebe somente a projeção destinada à sua tela; informações profissionais e resultados são isolados.
 - O login é simples (e-mail e senha com hash bcrypt, sessão por cookie) e serve a este projeto acadêmico. O protótipo não oferece prontuário, armazenamento clínico, criptografia de banco, autorização organizacional, alta disponibilidade ou escala de produção.
 - Não é um instrumento validado, não diagnostica TDAH ou desatenção e não compara o participante a normas clínicas.

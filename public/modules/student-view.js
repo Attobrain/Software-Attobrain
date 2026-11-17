@@ -17,17 +17,16 @@ export function studentMessage(state) {
     };
   if (state.phase === "INTERVAL")
     return {
-      eyebrow: "HORA DE UMA PAUSA",
-      title: "Um momento para descansar.",
-      description: "A próxima atividade começa quando o profissional orientar.",
-      symbol: "pause",
+      eyebrow: "PRÓXIMA ETAPA",
+      title: "A próxima atividade está chegando.",
+      description: "Aguarde a orientação do profissional para continuar.",
+      symbol: "arrow",
     };
   if (state.state === "PAUSED")
     return {
-      eyebrow: "PODE FICAR À VONTADE",
-      title: "Vamos fazer uma pausa.",
-      description:
-        "Você pode descansar a mão. Aguarde a orientação para continuar.",
+      eyebrow: "ATIVIDADE PAUSADA",
+      title: "A atividade está pausada.",
+      description: "Aguarde a orientação do profissional para continuar.",
       symbol: "pause",
     };
   if (["COMPLETED", "TIMED_OUT", "ABORTED"].includes(state.state))
@@ -74,7 +73,7 @@ export function renderStudent(state, previous) {
     text(
       "student-instruction",
       state.state === "RUNNING"
-        ? "Guie o ponto luminoso pelos corredores até a chegada. Use o controle disponível para movimentá-lo."
+        ? "Guie o ponto luminoso pelos corredores até a chegada."
         : "Observe o caminho. O profissional vai avisar quando começar.",
     );
     if (state.state === "RUNNING") window.closeAttobrainMenu?.();

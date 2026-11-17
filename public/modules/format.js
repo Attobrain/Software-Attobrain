@@ -21,6 +21,12 @@ export const time = (ms) =>
         .toString()
         .padStart(2, "0")}`
     : "—";
+export const sourceLabel = (source) =>
+  ({
+    mouse: "Controle visual demonstrativo",
+    "mouse/accepted-indicator": "Trajetória demonstrativa",
+    gaze: "Rastreamento ocular",
+  })[source] ?? source ?? "Registros originais da sessão";
 export const labels = {
   IDLE: "Aguardando preparação",
   READY: "Pronto para começar",

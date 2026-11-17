@@ -1,7 +1,7 @@
 import { createStudentEffects } from "./public/modules/student-effects.js";
 import { createPlatform } from "./public/modules/platform.js";
 import { professionalLayout } from "./public/modules/layout.js";
-import { text, number, time, labels } from "./public/modules/format.js";
+import { text, number, time, labels, sourceLabel } from "./public/modules/format.js";
 import { drawBoard } from "./public/modules/board.js";
 import {
   waveform,
@@ -151,7 +151,9 @@ function showImported(data) {
   spectrumData = data.eeg.spectra?.at(-1) ?? null;
   for (const block of data.eeg.blocks.slice(-90)) acceptBlock(block);
   document.getElementById("channel").replaceChildren(...Array.from({ length: data.manifest.config.channels ?? 1 }, (_, i) => new Option(`Canal ${i + 1}`, String(i))));
-  text("technical", JSON.stringify({ manifest: data.manifest, quality: data.report.analysis?.quality, originalImportedReport: true }, null, 2));
+  const manifest = { ...data.manifest };
+  if (manifest.provenance) manifest.provenance = { ...manifest.provenance, input: sourceLabel(manifest.provenance.input) };
+  text("technical", JSON.stringify({ manifest, quality: data.report.analysis?.quality, originalImportedReport: true }, null, 2));
   text("connection", "Relatório salvo aberto · somente leitura");
   renderReport(data.report);
   comparison(document.getElementById("comparison-chart"), data.report.analysis);
@@ -204,7 +206,7 @@ socket.on("snapshot", (incoming) => {
   text(
     "interval",
     state.intervalRemaining > 0
-      ? `Descanso: faltam ${Math.ceil(state.intervalRemaining / 1000)} s`
+      ? `Intervalo: faltam ${Math.ceil(state.intervalRemaining / 1000)} s`
       : "",
   );
   text("active", `${time(state.active)} / ${time(state.limitMs)}`);
@@ -238,12 +240,12 @@ socket.on("snapshot", (incoming) => {
   text(
     "guidance",
     state.phase === "INTERVAL"
-      ? "Aguarde o fim do descanso. Depois, prepare a próxima atividade."
+      ? "Intervalo em andamento. A próxima atividade será liberada ao final."
       : state.state === "READY" && !state.workflow.studentReady
         ? "Deixe a janela do aluno visível e conectada para poder iniciar."
       : state.state === "PAUSED"
         ? "Confira a conexão e a tela do aluno antes de retomar."
-        : "Os números mostram a trajetória desta atividade. A entrada é provisória e não mede atenção nem atividade cerebral.",
+        : "Os números descrevem a trajetória desta atividade. Não representam uma medição de atenção ou atividade cerebral.",
   );
   text(
     "set-info",
@@ -295,6 +297,7 @@ socket.on("snapshot", (incoming) => {
         sessionId: state.id,
         runId: state.runId,
         config: state.config,
+        input: sourceLabel(state.report?.analysis?.provenance?.input ?? "mouse"),
         discarded: state.discarded,
         engineDelayMs: state.engineDelay,
         latencyMs: state.latency,

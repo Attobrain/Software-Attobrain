@@ -42,7 +42,7 @@ export function bindTimeline(loadLive) {
     waveform(document.getElementById("replay-eeg"), [channel]);
     text(
       "timeline-caption",
-      `${time(instant)} da sessão · ${run?.label ?? "Descanso / preparação"} · ${eventNames[event?.type] ?? "Sem acontecimento"} · entrada demonstrativa provisória`,
+      `${time(instant)} da sessão · ${run?.label ?? "Intervalo / preparação"} · ${eventNames[event?.type] ?? "Sem acontecimento"} · trajetória demonstrativa`,
     );
   }
   function setData(value, source) {

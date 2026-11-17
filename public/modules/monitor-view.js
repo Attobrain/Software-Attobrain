@@ -38,7 +38,7 @@ export function updateMonitor(state, events) {
   text(
     "trend-caption",
     hasSamples
-      ? `A linha mostra o ritmo registrado do percurso; os marcadores indicam contatos com as paredes. Foram ${m.collisionEpisodeCount ?? "—"} contatos nesta atividade. A entrada é provisória nesta versão.`
+      ? `A linha mostra o ritmo registrado do percurso; os marcadores indicam contatos com as paredes. Foram ${m.collisionEpisodeCount ?? "—"} contatos nesta atividade.`
       : "O gráfico usa somente registros da atividade atual.",
   );
   const phase = state.closed
