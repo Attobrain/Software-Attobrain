@@ -59,6 +59,10 @@
  .live-app .empty-analysis img { flex:0 0 auto; width:min(240px,80%); height:auto; }
  .live-app .report-tabs button { padding:12px 15px; }
 }
+@media(max-width:900px) {
+ .live-app .report-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); overflow:visible; }
+ .live-app .report-tabs button { min-width:0; padding:11px 10px; line-height:1.35; white-space:normal; }
+}
 @media print {
  .live-app .report-illustration,.live-app .connection-illustration { display:none !important; }
  .live-app .report-tabs,.live-app .episode-list,.live-app .empty-analysis img { display:none !important; }

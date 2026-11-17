@@ -127,7 +127,11 @@
 .live-app .table-wrap { max-width:100%; overflow:auto; }
 .live-app .table-wrap td .controls { flex-wrap:wrap; }
 .live-app #message:not(:empty) { margin-bottom:20px; border:1px solid #e8cc9e; padding:16px; border-radius:12px; color:#744714; background:#fff9ed; }
-.live-app :focus-visible { outline:3px solid #7f5bd5; outline-offset:3px; }
+.live-app :is(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid #7f5bd5;
+  outline-offset: 3px;
+}
+.live-app :is(h1, h2, h3)[tabindex="-1"]:focus-visible { outline: 0; }
 .live-app #session-view > .technical-panel > summary { font-weight:650; }
 .live-app .termination-dialog { max-width:min(520px,calc(100vw - 32px)); padding:32px; border:1px solid #e4e7ef; border-radius:16px; color:#0f172a; }
 .live-app .termination-dialog::backdrop { background:#17213c88; }
