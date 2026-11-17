@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build:web": "node scripts/build-web.js",
+    "build:launcher": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-launcher.ps1",
     "start": "node index.js",
     "start:xampp": "node --env-file=.env index.js",
     "test": "node --test engine.test.js realtime.test.js src/tests/*.test.js",

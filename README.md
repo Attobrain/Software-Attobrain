@@ -50,6 +50,12 @@ Acesse `http://localhost:3000/login` e entre com o profissional de demonstraçã
 
 Para zerar o banco, importe `sql/attobrain.sql` de novo (apague antes o banco `attobrain` no phpMyAdmin). O desenho das tabelas está em [docs/BANCO.md](docs/BANCO.md).
 
+### Abrir pelo executável no Windows
+
+O lançador `dist/Attobrain.exe` inicia o MySQL do XAMPP se ele ainda estiver parado, executa o servidor com o `.env` do projeto e abre a tela de login no navegador. Se o servidor já estiver rodando, ele apenas abre a página; não cria outra instância. O lançador inclui uma cópia do runtime Node.js e não precisa de comandos no terminal. Fechar o navegador mantém o servidor ativo; abrir o executável novamente reabre a tela sem iniciar outra cópia.
+
+Mantenha `dist` dentro da pasta do projeto, ao lado de `index.js`, `.env` e `node_modules`. O banco `attobrain` precisa estar configurado uma vez; em uma instalação nova, importe `sql/attobrain.sql` pelo phpMyAdmin. Para recriar o executável, rode `npm run build:launcher`.
+
 `npm start` (sem `.env`) roda **sem banco e sem login**; é o modo usado pelos testes automáticos.
 
 **Limitações conhecidas do login (protótipo acadêmico):** a sessão do profissional fica na memória do servidor (reiniciar o Node exige novo login); não há limite de tentativas de senha nem cadastro de novos profissionais (o profissional vem do `sql/attobrain.sql`; troque a senha de demonstração fora da apresentação); o login funciona na mesma origem (`http://localhost:3000`), então o front estático da Vercel não faz login sozinho. Se a sessão do labirinto terminar pelo cronômetro ou pela última fase, o resumo também é gravado; observações escritas depois atualizam a mesma linha de `sessoes`.
