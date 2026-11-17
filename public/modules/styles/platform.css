@@ -19,33 +19,13 @@
 .live-app .step-count { font-size:13px; color:#526078; }
 .live-app .session-strip .protocol-steps { display:none; }
 .live-app .home-grid, .live-app .review-grid, .live-app .dimension-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
-.live-app .home-grid { margin:28px 0; }
-.live-app .home-grid article { padding:32px; min-height:240px; }
-.live-app .home-grid h2 { font-size:24px; margin-bottom:12px; }
-.live-app .home-grid p { color:#526078; min-height:48px; }
-.live-app .home-number { color:#6941c6; background:#f2edfc; border-radius:12px; display:grid; place-items:center; width:44px; height:44px; font-weight:700; margin-bottom:24px; }
-.live-app .platform-notice { padding:24px; border:1px solid #ded6f2; border-radius:16px; background:#f1edfb; }
-.live-app .platform-notice p { margin:8px 0 0; color:#4d426b; max-width:85ch; }
-.live-app .overview-notice { display:flex; align-items:center; justify-content:space-between; gap:28px; min-height:210px; }
-.live-app .overview-notice-copy { min-width:0; max-width:760px; }
-.live-app .overview-notice > img { display:block; flex:0 0 min(32%,340px); width:min(32%,340px); height:220px; object-fit:contain; }
-.live-app .overview-notice-copy > strong { display:block; max-width:34ch; margin-top:10px; color:#241b3e; font-size:clamp(21px,2vw,28px); letter-spacing:-.025em; line-height:1.2; }
-.live-app .simulation-disclosure { margin-top:12px; color:#4d426b; font-size:12px; }
-.live-app .simulation-disclosure summary { width:fit-content; cursor:pointer; font-weight:650; }
-.live-app .simulation-disclosure p { margin:8px 0 0; font-size:12px; }
-.live-app .future-capabilities { margin:30px 0 36px; }
-.live-app .future-capabilities > .section-heading { align-items:flex-end; margin-bottom:16px; }
-.live-app .future-capability-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-.live-app .future-capability-card { min-width:0; padding:20px; border:1px solid #e4e7ef; border-radius:16px; background:linear-gradient(150deg,#fff 25%,#faf8ff); box-shadow:0 8px 26px rgb(41 35 71 / 4%); }
-.live-app .future-capability-art { display:grid; place-items:center; height:150px; margin-bottom:14px; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at 50% 62%,#ebe6fb 0,transparent 68%); }
-.live-app .future-capability-art img { display:block; width:100%; height:100%; object-fit:contain; }
-.live-app .future-layer-status, .live-app .concept-badge { display:inline-flex; align-items:center; min-height:25px; padding:4px 9px; border-radius:999px; background:#f0ebfa; color:#5832a7; font-size:10px; font-weight:750; letter-spacing:.045em; }
-.live-app .future-capability-card h3 { margin:8px 0; color:#211a38; font-size:17px; }
-.live-app .future-capability-card p { margin:0; color:#526078; font-size:13px; line-height:1.6; }
-.live-app .art-float { animation:future-art-float 7s ease-in-out infinite; }
-.live-app .art-delay-1 { animation-delay:-2.3s; }
-.live-app .art-delay-2 { animation-delay:-4.6s; }
-.live-app .import-card p { color:#526078; }
+.live-app .home-grid { grid-template-columns:repeat(3,minmax(0,1fr)); margin:8px 0 28px; gap:16px; }
+.live-app .home-action-card { display:flex; min-width:0; min-height:0; flex-direction:column; align-items:flex-start; padding:24px; }
+.live-app .home-action-card .eyebrow { color:#6941c6; }
+.live-app .home-action-card h2 { margin:10px 0 6px; font-size:20px; }
+.live-app .home-action-card p { flex:1; color:#526078; margin:0 0 20px; }
+.live-app .home-action-primary { border-top:3px solid #6941c6; background:linear-gradient(135deg,#fff 45%,#f6f2ff); }
+.live-app .home-action-card .button { margin-top:auto; }
 .live-app .student-picker .section-heading { margin-bottom:24px; }
 .live-app .student-search { display:block; max-width:440px; margin:24px 0; }
 .live-app .student-search input { display:block; margin-top:8px; }
@@ -119,9 +99,9 @@
 .live-app .termination-dialog h2, .live-app .termination-dialog label { margin-bottom:20px; display:block; }
 .live-app .termination-dialog select { margin-top:8px; }
 @keyframes flow-reveal { from { opacity:.3; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
-@keyframes future-art-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
 @media (max-width:1050px) {
   .live-app .guided-steps li { display:flex; flex-direction:column; gap:8px; text-align:center; font-size:11px; }
+  .live-app .home-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .live-app .guided-steps li small { display:none; }
   .live-app #configuration-panel { grid-template-columns:minmax(0,1fr); }
   .live-app .configuration-preview { position:static; }
@@ -130,19 +110,10 @@
   .live-app .guided-steps { display:none; }
   .live-app .step-count { background:#f0ebfa; padding:14px; border-radius:10px; color:#5832a7; }
   .live-app .home-grid, .live-app .review-grid, .live-app .dimension-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
-  .live-app .future-capability-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
-  .live-app .future-capability-card { display:grid; grid-template-columns:92px minmax(0,1fr); align-items:center; gap:2px 14px; padding:14px; }
-  .live-app .future-capability-art { grid-row:1/4; width:92px; height:92px; margin:0; }
-  .live-app .future-capability-card h3 { margin:5px 0; }
-  .live-app .future-capability-card p { grid-column:2; }
-  .live-app .future-capability-card .future-layer-status { justify-self:start; }
   .live-app .flow-heading { display:block; }
   .live-app .flow-heading > a { margin-top:16px; }
   .live-app .student-picker .section-heading { flex-wrap:wrap; }
   .live-app #activity-setup .setup { grid-template-columns:minmax(0,1fr); }
-  .live-app .home-grid article { padding:24px; }
-  .live-app .overview-notice { align-items:flex-start; flex-direction:column-reverse; gap:8px; }
-  .live-app .overview-notice > img { align-self:center; flex-basis:auto; width:min(300px,90%); height:175px; }
   .live-app .review-values { grid-template-columns:minmax(0,1fr); gap:8px; }
   .live-app .review-values dd { margin-bottom:12px; }
   .live-app .dimension-run p { grid-template-columns:minmax(0,1fr); }

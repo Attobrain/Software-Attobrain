@@ -3,7 +3,7 @@ const erro = document.getElementById("login-erro");
 const ajuda = document.getElementById("login-help");
 
 document.querySelector("[data-login-help]")?.addEventListener("click", () => {
-  ajuda.textContent = "A recuperação de senha ainda não está disponível nesta demonstração. Procure a equipe responsável pelo acesso.";
+  ajuda.textContent = "A recuperação de senha ainda não está disponível. Procure a equipe responsável pelo acesso.";
 });
 
 form.addEventListener("submit", async (evento) => {

@@ -79,7 +79,7 @@ export function renderStudent(state, previous) {
     if (state.state === "RUNNING") window.closeAttobrainMenu?.();
   } else {
     const message = studentMessage(state);
-    view.innerHTML = `<div class="student-welcome"><div class="student-orbit" aria-hidden="true"><i></i><i></i><i></i></div><div class="student-route-hero art-float" aria-hidden="true"><img src="/assets/gaze-maze-vision.png" alt="" width="1000" height="667" fetchpriority="high"></div><span class="eyebrow" id="student-eyebrow"></span><h1 id="student-waiting" aria-live="polite"></h1><p id="student-description"></p><div class="waiting-state">${icon(message.symbol)}<span>Aguarde as orientações do profissional</span></div><div class="student-guide"><span><b>01</b>Observe o caminho</span><span><b>02</b>Siga os corredores</span><span><b>03</b>Alcance o violeta</span></div></div>`;
+    view.innerHTML = `<div class="student-welcome"><div class="student-orbit" aria-hidden="true"><i></i><i></i><i></i></div><div class="student-route-hero" aria-hidden="true"><img src="/assets/gaze-maze-vision.png" alt="" width="1000" height="667" fetchpriority="high"></div><span class="eyebrow" id="student-eyebrow"></span><h1 id="student-waiting" aria-live="polite"></h1><p id="student-description"></p><div class="waiting-state">${icon(message.symbol)}<span>Aguarde as orientações do profissional</span></div><div class="student-guide"><span><b>01</b>Observe o caminho</span><span><b>02</b>Siga os corredores</span><span><b>03</b>Alcance o violeta</span></div></div>`;
     text("student-eyebrow", message.eyebrow);
     text("student-waiting", message.title);
     text("student-description", message.description);
