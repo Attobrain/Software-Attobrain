@@ -94,7 +94,7 @@ O protocolo padrão percorre:
 Selecionar aluno → Configurar → Revisar → Treinamento → A → intervalo → B → intervalo → C → Resultados
 ```
 
-Na revisão, o profissional confere a prévia e abre a tela do aluno. **Iniciar sessão** prepara o protocolo; **Iniciar atividade** começa cada percurso. O servidor controla as transições e exige a conexão recente e visível do aluno. Entre A/B e B/C há um intervalo de 30 a 45 segundos e o profissional confirma o avanço. O treinamento pode ser repetido até sete vezes e fica fora das comparações A/B/C.
+Na revisão, o profissional confere a prévia e abre a tela do aluno. **Iniciar sessão** prepara o protocolo; **Iniciar atividade** começa cada percurso. O servidor controla as transições e exige a conexão recente e visível do aluno. Entre A/B e B/C há um intervalo configurável; durante ele, o profissional pode aguardar ou usar **Pular intervalo** para antecipar a preparação da próxima atividade. O tempo reduzido fica registrado no histórico, e a próxima atividade continua aguardando o comando normal de início. O treinamento pode ser repetido até sete vezes e fica fora das comparações A/B/C.
 
 Exploração é um fluxo separado de quatro etapas com semente livre e sem tendência A/B/C. Uma interrupção antecipada solicita confirmação e motivo; ela gera um resultado parcial quando há dados disponíveis. Conclusão, timeout e abandono são estados diferentes.
 
@@ -228,7 +228,17 @@ Rotas de login e cadastro (cookie de sessão; a API de alunos responde `401` sem
 - `GET /api/alunos`, `GET /api/alunos/:id`, `POST /api/alunos`, `PUT /api/alunos/:id`, `DELETE /api/alunos/:id`
 - `GET /api/alunos/:id/sessoes` — histórico de sessões do aluno.
 
-`GET /api/protocol` publica o catálogo real de transportes, eventos, comandos, defaults e formatos HTTP. O transporte em tempo real usa Socket.IO via WebSocket: mesma origem localmente ou servidor HTTPS configurado na publicação. O fluxo cria ou restaura uma sessão e associa uma credencial ao papel profissional ou aluno. Comandos profissionais incluem `commandId` e `expectedRevision`; entradas do aluno incluem `runId`, sequência, coordenadas normalizadas e estado dentro/fora do quadro. A presença periódica informa se a página do aluno está visível.
+`GET /api/protocol` publica o catálogo real de transportes, eventos, comandos, defaults e formatos HTTP. O transporte em tempo real usa Socket.IO via WebSocket: mesma origem localmente ou servidor HTTPS configurado na publicação. O fluxo cria ou restaura uma sessão e associa uma credencial ao papel profissional ou aluno. Comandos profissionais incluem `commandId` e `expectedRevision`; `skip-interval` antecipa somente a espera entre A/B ou B/C, registra o tempo reduzido e prepara a etapa seguinte sem iniciá-la. Entradas do aluno incluem `runId`, sequência, coordenadas normalizadas e estado dentro/fora do quadro. A presença periódica informa se a página do aluno está visível.
+
+Exemplo do comando de contingência e resposta:
+
+```json
+{"id":"id-da-sessao","commandId":"id-unico-do-comando","expectedRevision":12,"type":"skip-interval"}
+```
+
+```json
+{"ok":true}
+```
 
 Rotas HTTP documentadas pelo catálogo:
 

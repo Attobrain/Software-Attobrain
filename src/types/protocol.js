@@ -1,11 +1,11 @@
 "use strict";
 const { DEFAULTS } = require("../validators/config");
 const COMMANDS = Object.freeze({
-  "select-participant": ["participant"], configure: ["config"], back: ["step"], begin: [], start: [], pause: [], resume: [], abort: ["reason"], next: [], "repeat-training": [], "end-session": ["reason"], notes: ["value"], reanalyze: [],
+  "select-participant": ["participant"], configure: ["config"], back: ["step"], begin: [], start: [], pause: [], resume: [], abort: ["reason"], next: [], "skip-interval": [], "repeat-training": [], "end-session": ["reason"], notes: ["value"], reanalyze: [],
 });
 function protocolDescription() {
   return {
-    version: 4,
+    version: 5,
     transport: "Socket.IO WebSocket; mesma origem local ou origem HTTPS autorizada na hospedagem",
     events: { join: { create: { create: true, creationToken: "UUID mantido até confirmação" }, restore: { id: "sessionId", key: "credencial do papel" } }, presence: { visible: true }, preview: { config: DEFAULTS }, input: { runId: "runId", seq: 1, inside: true, hidden: false, x: .1, y: .1, clientTime: 0 } },
     command: { required: ["id", "commandId", "expectedRevision", "type"], types: COMMANDS, defaults: DEFAULTS },

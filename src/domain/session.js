@@ -50,7 +50,7 @@ class Session {
     this.eeg = { blocks: [], spectra: [], artifacts: [], gaps: [], samples: 0 };
   }
   event(type, data = {}, source = "server") {
-    if (["prepared", "pause", "started", "resumed", "run-ended", "session-ended"].includes(type)) this.controlRevision++;
+    if (["prepared", "pause", "started", "resumed", "run-ended", "interval-skipped", "session-ended"].includes(type)) this.controlRevision++;
     const e = {
       schemaVersion: 2,
       sessionId: this.id,
@@ -236,6 +236,31 @@ class Session {
           r.label === "Treinamento" ? "A" : r.label === "A" ? "B" : "C",
         );
         break;
+      case "skip-interval": {
+        if (
+          !r ||
+          !["A", "B"].includes(r.label) ||
+          !TERMINAL.has(r.state) ||
+          this.phase !== "INTERVAL" ||
+          this.closed
+        )
+          throw Error("Não há intervalo entre atividades para antecipar.");
+        const remainingMs = Math.max(0, this.intervalUntil - this.time);
+        if (!remainingMs)
+          throw Error("O intervalo já terminou. Avance para a próxima atividade.");
+        const nextLabel = r.label === "A" ? "B" : "C";
+        const configuredMs = this.config.intervalSeconds * 1000;
+        this.event("interval-skipped", {
+          from: r.label,
+          to: nextLabel,
+          configuredMs,
+          elapsedMs: Math.max(0, configuredMs - remainingMs),
+          skippedMs: remainingMs,
+        });
+        this.intervalUntil = this.time;
+        this.newRun(nextLabel);
+        break;
+      }
       case "repeat-training":
         if (
           this.closed ||

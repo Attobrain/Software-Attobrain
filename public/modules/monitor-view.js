@@ -9,6 +9,7 @@ export const eventNames = {
   contact: "Encostou na parede",
   checkpoint: "Ponto do caminho alcançado",
   "run-ended": "Etapa finalizada",
+  "interval-skipped": "Intervalo antecipado para apresentação",
   "session-ended": "Sessão encerrada",
   "eeg-modulation": "Ajuste do sinal simulado",
   "engine-gap": "Falha técnica momentânea",

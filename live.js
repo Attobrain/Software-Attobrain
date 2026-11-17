@@ -227,6 +227,7 @@ socket.on("snapshot", (incoming) => {
       resume: state.workflow.actions.resume,
       abort: ["READY", "RUNNING", "PAUSED"].includes(state.state),
       next: state.workflow.actions.next,
+      "skip-interval": state.workflow.actions.skipInterval,
       "repeat-training":
         state.workflow.actions.repeat,
       "end-session": !state.closed,
@@ -234,13 +235,18 @@ socket.on("snapshot", (incoming) => {
     };
   for (const [id, value] of Object.entries(enabled))
     document.getElementById(id).disabled = !value;
-  for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: terminal && !state.closed, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
+  for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: state.workflow.actions.next, "skip-interval": state.workflow.actions.skipInterval, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
+  if (state.workflow.actions.skipInterval) {
+    const nextLabel = state.label === "A" ? "B" : "C";
+    document.getElementById("skip-interval").textContent = `Pular intervalo e preparar ${nextLabel}`;
+    document.getElementById("skip-interval").setAttribute("aria-label", `Pular o intervalo e preparar a atividade ${nextLabel}`);
+  }
   for (const input of document.getElementById("configuration").elements)
     input.disabled = state.state !== "IDLE";
   text(
     "guidance",
     state.phase === "INTERVAL"
-      ? "Intervalo em andamento. A próxima atividade será liberada ao final."
+      ? "Atalho de apresentação: antecipe o preparo da próxima atividade. O intervalo reduzido ficará registrado."
       : state.state === "READY" && !state.workflow.studentReady
         ? "Deixe a janela do aluno visível e conectada para poder iniciar."
       : state.state === "PAUSED"
