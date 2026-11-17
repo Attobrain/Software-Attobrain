@@ -1,5 +1,5 @@
 "use strict";
-// Testes extras de QA: ownership, validação, 404, login, falha de banco e resumo da sessão.
+// Testes de integração: permissões, validação, login, erros e resumo da sessão.
 // Banco falso em memória, com 2 profissionais. Dados 100% sintéticos.
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -82,8 +82,8 @@ const comApp = (nome, fn, db) => test(nome, async () => {
   try { await fn(ctx); } finally { await ctx.app.close(); }
 });
 
-// ---------- Ownership ----------
-comApp("ownership: profissional B não lê, edita, apaga nem lista o aluno do A", async ({ base }) => {
+// ---------- Acesso aos próprios alunos ----------
+comApp("acesso: profissional B não lê, edita, apaga nem lista o aluno do A", async ({ base }) => {
   const a = await entrarA(base);
   const b = await entrarB(base);
   const { id } = await (await fetch(`${base}/api/alunos`, req("POST", { nome: "Aluno do A" }, a))).json();
@@ -145,7 +145,7 @@ comApp("validação: JSON malformado em /api devolve 400 (não 500)", async ({ b
   assert.equal(r.status, 400);
 });
 
-// ---------- PUT/DELETE inexistente ----------
+// ---------- Edição ou exclusão de cadastro inexistente ----------
 comApp("PUT e DELETE de id inexistente ou não numérico devolvem 404", async ({ base }) => {
   const a = await entrarA(base);
   for (const id of ["9999", "abc", "-1"]) {

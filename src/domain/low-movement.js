@@ -1,5 +1,5 @@
 "use strict";
-// Resample each uninterrupted segment at 50 ms, then use a 500 ms moving window.
+// Divide cada trecho contínuo em passos de 50 ms e analisa janelas móveis de 500 ms.
 function lowMovement(steps, config) {
   const episodes = [];
   let segment = -1,

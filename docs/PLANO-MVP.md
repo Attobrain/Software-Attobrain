@@ -1,5 +1,7 @@
 # Attobrain — evolução incremental para um MVP multimodal
 
+> Plano inicial de implementação. Onde este documento divergir do sistema atual, use o README, `docs/FLUXO-GUIADO.md` e `docs/BANCO.md` como descrição da versão executável.
+
 ## 1. Objetivo, limites e decisões principais
 
 Evoluir o projeto atual para executar **treinamento + três atividades avaliativas**, registrar o comportamento durante cada percurso e apresentar resultados comparativos, acompanhados de EEG sintético sincronizado.

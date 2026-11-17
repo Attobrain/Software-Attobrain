@@ -177,7 +177,7 @@ function analyze(run, config) {
   };
 }
 module.exports = { analyze, statistics, quantile };
-// Missing input is not stationary behavior. Split gaps without connecting episodes.
+// Falta de entrada não significa que o aluno ficou parado; lacunas separam episódios.
 function validSegments(steps) {
   if (steps.every(s => s.validInput !== false)) return steps;
   let segment = 0, previous = null;

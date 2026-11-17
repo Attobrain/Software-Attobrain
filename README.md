@@ -2,7 +2,7 @@
 
 MVP acadêmico da Attobrain para apresentar uma atividade de labirinto com acompanhamento em duas telas e um perfil explicável da sessão. O participante percorre um labirinto usando o mouse como controle de entrada; o profissional acompanha a atividade e consulta os registros gerados pelo software.
 
-O sistema é uma demonstração de software. O mouse não rastreia os olhos, o EEG disponível é inteiramente sintético e as métricas não são medidas clínicas. Não há diagnóstico, avaliação de atenção, sensor conectado ou persistência em banco de dados.
+O sistema é um protótipo demonstrativo. A entrada do labirinto é provisória, o EEG é inteiramente sintético e as métricas descrevem somente o percurso. Não há câmera, rastreador ocular ou sensor cerebral conectado; o sistema não mede atenção nem faz diagnóstico. O MySQL guarda cadastros e resumos de sessão, enquanto trajetórias, eventos e sinais detalhados permanecem em memória até a exportação.
 
 ## Índice
 
@@ -15,6 +15,7 @@ O sistema é uma demonstração de software. O mouse não rastreia os olhos, o E
 - [Exportação, importação e impressão](#exportação-importação-e-impressão)
 - [Privacidade e limites operacionais](#privacidade-e-limites-operacionais)
 - [Arquitetura do projeto](#arquitetura-do-projeto)
+- [Alinhamento com a apresentação](#alinhamento-com-a-apresentação)
 - [API e comunicação](#api-e-comunicação)
 - [Testes e exemplos reproduzíveis](#testes-e-exemplos-reproduzíveis)
 - [Documentação complementar](#documentação-complementar)
@@ -183,7 +184,19 @@ A impressão prioriza resumo, observações, comparação elegível, limitaçõe
 
 ## Arquitetura do projeto
 
-Aplicação sem framework de frontend, em JavaScript, Node.js, HTML e CSS. Socket.IO é usado para comunicação em tempo real; `fft.js` fornece a FFT demonstrativa. Os contratos TypeScript são documentação e não requerem compilador.
+Aplicação sem framework de frontend, em JavaScript, Node.js, HTML e CSS. Express entrega as páginas e rotas HTTP; Socket.IO sincroniza as duas telas; MySQL guarda cadastros e resumos. `bcryptjs` e `express-session` cuidam do login demonstrativo, `mysql2` conecta ao banco e `fft.js` calcula o espectro do sinal sintético. O servidor usa `node:worker_threads` para gerar esse sinal fora do fluxo principal. `socket.io-client` é usado somente nos testes. Os arquivos `.d.ts` documentam formatos e não são compilados: não há compilador TypeScript no projeto.
+
+### Alinhamento com a apresentação
+
+| Tema apresentado | Situação neste MVP |
+| --- | --- |
+| BCI, rastreamento ocular e visão computacional | Objetivos futuros do projeto; ainda não há sensor nem câmera conectados. |
+| EEG e atenção | O EEG é simulado. As métricas descrevem registros do labirinto e não estimam atenção. |
+| Web Workers | A geração sintética usa `node:worker_threads` no servidor Node; o navegador não usa a API Web Workers. |
+| JavaScript, HTML/CSS, Node.js, Socket.IO, `fft.js`, MySQL, Canvas, Docker e Vercel | Tecnologias principais presentes no código ou na publicação do projeto. |
+| Express, `express-session`, `bcryptjs` e `mysql2` | Bibliotecas de apoio usadas nas rotas, login e conexão MySQL. |
+
+Se o slide de ferramentas pretende listar toda a implementação, ele deve citar essas bibliotecas de apoio e trocar “Web Workers” por `node:worker_threads`.
 
 | Caminho | Responsabilidade |
 | --- | --- |
@@ -257,4 +270,4 @@ As fixtures são entradas automatizadas, não participantes reais. Os testes cob
 - [Relatório de entrega e limites da validação](docs/ENTREGA-MVP.md)
 - [Descrição da simulação anterior](SIMULACAO.md) — documento histórico, não substitui as definições atuais de resultados v4.
 
-O MVP serve à demonstração acadêmica da experiência do labirinto e do processamento de dados simulados. Persistência, autenticação institucional, integração com sensor real, validação científica e qualquer aplicação clínica exigem etapas de projeto e avaliação próprias.
+O MVP serve à demonstração acadêmica da experiência do labirinto e do processamento de dados simulados. A persistência atual cobre cadastros e resumos; guardar os dados detalhados após reinício, autenticação institucional, integração com sensor real, validação científica e qualquer aplicação clínica exigem etapas próprias de projeto e avaliação.

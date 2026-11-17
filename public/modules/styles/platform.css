@@ -1,4 +1,4 @@
-/* Guided platform: one task at a time, shared Attobrain identity. */
+/* O fluxo guiado mostra uma tarefa por vez e mantém a identidade Attobrain. */
 [hidden] { display: none !important; }
 .live-app .workspace { min-height: 100vh; }
 .live-app .flow-heading { display:flex; justify-content:space-between; align-items:center; gap:24px; margin-bottom:24px; }

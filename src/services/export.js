@@ -15,7 +15,7 @@ async function streamExport(session, request, response) {
       await session.worker.finish(session.time);
     const revision = session.revision,
       data = session.exportData(false);
-    // Snapshot array membership before yielding; a live run may continue during download.
+    // Copia a lista antes de ceder controle; a sessão pode continuar durante o download.
     data.events = [...data.events];
     data.runs = data.runs.map((r) => ({
       ...r,
@@ -84,7 +84,7 @@ async function streamExport(session, request, response) {
         }).slice(0, -1) +
         ',"spectra":',
     );
-    // Each spectral object is bounded to eight channels; yield between windows.
+    // Cada espectro tem até oito canais; cede controle entre as janelas.
     await write("[");
     for (let i = 0; i < eeg.spectra.length; i++)
       await write((i ? "," : "") + JSON.stringify(eeg.spectra[i]));

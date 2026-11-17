@@ -1,4 +1,4 @@
-/* Session state and six equally weighted, stable metric cards. */
+/* Indicadores da sessão usam cartões do mesmo tamanho. */
 .live-app .session-strip {
   display: flex;
   align-items: center;

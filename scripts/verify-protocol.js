@@ -1,5 +1,5 @@
 "use strict";
-// Reproducible functional fixture. No real participant or physiological acquisition.
+// Cenário funcional reproduzível, sem participante ou coleta fisiológica real.
 const { writeFileSync } = require("node:fs");
 const { Session } = require("../src/domain/session");
 const s = new Session(0);

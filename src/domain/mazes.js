@@ -54,7 +54,7 @@ function describe(level, seed) {
     seed,
   };
 }
-// Generated offline by scripts/select-mazes.js; runtime never searches candidates.
+// Gerado antes da execução por scripts/select-mazes.js; o servidor não busca labirintos.
 const SETS = require("./maze-sets.json");
 function setFor(level) {
   return SETS[String(level)];

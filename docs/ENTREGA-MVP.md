@@ -2,6 +2,8 @@
 
 Data: 22/10/2026. Base: commit 74a7c9d, branch main. Escopo: módulo do labirinto; projeto existente preservado.
 
+Este relatório registra a primeira etapa do MVP naquela data. Ele não descreve as mudanças posteriores de login, cadastro MySQL e perfil acadêmico; consulte o README e `docs/FLUXO-GUIADO.md` para o estado atual.
+
 ## Implementado
 
 O plano original foi incorporado em docs/PLANO-MVP.md e atualizado pela seção 13, que prevalece sobre divergências anteriores. README e docs/PROTOCOLO.md descrevem a versão executável e os contratos.

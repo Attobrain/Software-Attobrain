@@ -1,4 +1,3 @@
-/* Student: calm waiting states, one task, no professional metrics. */
 .live-app.student-app {
   background: #f8fafc;
 }
@@ -167,7 +166,7 @@
   height: 18px;
   color: #acb5c3;
 }
-/* Student palette: expressive outside the board, quiet along the path. */
+/* A tela do aluno usa cor fora do labirinto e mantém o percurso tranquilo. */
 .live-app.student-app { background: radial-gradient(ellipse at 8% 15%, #e1faf2 0, transparent 45%), radial-gradient(ellipse at 95% 80%, #eae0ff 0, transparent 48%), #f6f4ff; }
 .live-app .student-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 .live-app .student-actions button { min-height:44px; border-radius:14px; transition:transform 160ms ease; }

@@ -1,4 +1,4 @@
-/* Analytics occupies the main column. Maze stays intentionally compact. */
+/* Os gráficos ocupam a coluna principal; o labirinto fica como contexto. */
 .live-app .monitor-grid {
   display: grid;
   grid-template-columns: minmax(0, 2.15fr) minmax(260px, 1fr);

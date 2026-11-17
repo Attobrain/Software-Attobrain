@@ -1,4 +1,4 @@
-/** Select a cue only for a new, uninterrupted server transition. */
+/** Escolhe um som apenas para uma mudança nova e contínua do servidor. */
 export function studentCue(current, previous) {
   if (!previous || current.disconnected || previous.disconnected || current.runId !== previous.runId) return null;
   if (current.state === previous.state) return null;
@@ -9,7 +9,7 @@ export function studentCue(current, previous) {
   return null;
 }
 
-/** Audio is opt-in, gesture-unlocked and never sent to the server. */
+/** O som é opcional, começa após ação do usuário e não é enviado ao servidor. */
 export function createStudentEffects(button) {
   let context, enabled = false;
   const voices = new Set();

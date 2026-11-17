@@ -18,7 +18,7 @@ const serverUrl = window.ATTOBRAIN_CONFIG?.serverUrl || location.origin;
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
   socket = io(serverUrl, { autoConnect: false, transports: ["websocket"] });
-// A reused student window must re-associate when a new session link changes its fragment.
+// Se a janela do aluno continuar aberta, ela se associa à nova sessão quando o link mudar.
 if (student) window.addEventListener("hashchange", () => location.reload());
 let credentials,
   state = null,

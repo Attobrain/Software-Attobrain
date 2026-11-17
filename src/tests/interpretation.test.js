@@ -9,7 +9,7 @@ const {Session}=require("../domain/session");
 const {configuration}=require("../validators/config");
 const {freshWalls}=require("../domain/contacts");
 const cfg=configuration();
-// Controlled accepted-step fixtures: no participant and no physiological data.
+// Cenários controlados com passos aceitos, sem participante ou dado fisiológico.
 function run(label="A",seconds=12,hits={}) {
  const d=describe(7,setFor(7).candidates[["A","B","C"].indexOf(label)].seed);
  const p=cell=>({x:(cell%7+.5)/7,y:(Math.floor(cell/7)+.5)/7});
@@ -56,7 +56,7 @@ test("sessões curtas permitem fatos de episódios; resumo limitado e origem ras
 });
 test("espacial usa início do episódio; equivalência regional continua indisponível",()=>{
  const rs=[run("A",12,{0:[1],30:[2],50:[3],70:[4]}),run("B"),run("C")];
- // Reset valid segments splits three later contacts at the same cell.
+ // Reiniciar o trecho válido separa três contatos posteriores na mesma célula.
  for(const i of [40,60])rs[0].steps.slice(i).forEach(s=>s.segment++);
  rs[0].result=analyze(rs[0],cfg);const a=interpretation(rs,cfg,setFor(7).id);
  assert(a.observations.some(o=>o.ruleId==="spatial-concentration"));assert.equal(a.comparability.regional.eligibility,"unavailable");

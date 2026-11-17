@@ -1,5 +1,5 @@
 "use strict";
-// Accelerated duration test: generates actual samples for 30 minutes, no timer shortcuts in DSP.
+// Gera 30 minutos de amostras em tempo acelerado e executa o processamento real do sinal.
 const { performance } = require("node:perf_hooks");
 const { SyntheticEEG } = require("../src/services/synthetic");
 const { welch } = require("../src/services/spectrum");

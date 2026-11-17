@@ -4,7 +4,7 @@
 
 A entrada `/` é o dashboard. Início, Alunos e Labirinto compartilham identidade e navegação. `/profissional` abre o fluxo de sessão; `/aluno` recebe o link temporário do profissional. `/legado` encaminha para a plataforma: a execução ilustrativa antiga não é mais oferecida.
 
-Alunos continuam no `localStorage` `attobrain-students`, sem banco. A chave existente e seus registros são preservados; JSON local inválido gera erro sem sobrescrever o conteúdo. Nome, instituição e curso servem ao cadastro demonstrativo. O servidor recebe apenas ID, nome e marcação de demonstração, congelados na sessão. Alterar ou excluir o cadastro local não altera o histórico já registrado.
+Os cadastros de alunos são armazenados no MySQL e acessados pelas rotas autenticadas de `/api/alunos`; a tela não usa `localStorage` como fonte principal. Ao iniciar uma sessão, o servidor guarda uma cópia mínima do participante (ID, nome e indicação de demonstração). Alterar o cadastro depois não modifica essa cópia nem o histórico já registrado. Ao encerrar a sessão, o MySQL recebe o resumo; trajetória, eventos e EEG sintético ficam em memória e no relatório exportado.
 
 ## Preparação e protocolo
 
@@ -25,7 +25,7 @@ O dashboard não cria sessões. Entrar em Labirinto cria ou restaura uma. A cria
 - `src/domain/analysis/`: qualidade, features, regras, evidências e geração de frases controladas.
 - `src/controllers/realtime.js`: papéis, presença, comandos e sincronização.
 - `public/modules/platform.js`: navegação e condução das telas, sem decidir transições críticas.
-- `public/modules/students.js`: armazenamento e telas do cadastro local.
+- `public/modules/students.js`: consulta a API autenticada e apresenta o cadastro vindo do MySQL.
 - `public/modules/interpretation-view.js`: resumo, dimensões, explicações e limitações.
 - `src/types/workflow.d.ts`: contratos tipados. Não há framework ou runtime adicional.
 

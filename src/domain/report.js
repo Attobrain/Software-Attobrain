@@ -1,7 +1,7 @@
 "use strict";
 const { statistics, quantile }=require("./metrics");
 const { interpretation }=require("./analysis/report");
-// All compatibility projections use the same eligibility-aware analysis.
+// Todas as projeções antigas reaproveitam a análise com critérios de elegibilidade.
 function consolidate(runs,config,setId) {
   const analysis=interpretation(runs,config,setId);
   const evaluations=["A","B","C"].map(label=>{

@@ -1,7 +1,7 @@
 "use strict";
 const { cellAt } = require("./mazes");
 const CONTACT_POLICY = Object.freeze({ version: "contacts-3.0", separationMs: 200, recoveryMs: 500, advance: .01 });
-// A wall is recorded again only after a full interval without touching it.
+// O contato só volta a contar depois de um intervalo completo sem tocar a parede.
 function freshWalls(hits, last, time) {
   const unique = [...new Set(hits)];
   const fresh = unique.filter(wall => !last.has(wall) || time - last.get(wall) >= CONTACT_POLICY.separationMs - 1e-6);
