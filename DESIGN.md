@@ -15,7 +15,7 @@ Use the existing Attobrain identity shown in the Figma file `protótipo - ATTObr
 
 ## Login
 
-At desktop widths, use the Figma split composition: a 39% violet-to-teal brand panel on the left and a neutral access area on the right. Place the logo and message on the left; center a 410px access form on the right. At widths below 760px, stack the brand message above the form. Keep field labels visible, focus rings clear, errors announced, and reduced-motion preferences respected.
+At desktop widths, use the Figma split composition: a 39% violet-to-teal brand panel on the left and a neutral access area on the right. Place the logo and message on the left; center a 410px access form on the right. Vertically center the form content inside its card. At widths below 840px, stack the brand message above the form. Keep field labels visible, focus rings clear, interactive targets at least 44px high, errors announced, and reduced-motion preferences respected.
 
 ## Professional and learner screens
 

@@ -13,7 +13,7 @@ form.addEventListener("submit", async (evento) => {
   const dados = Object.fromEntries(new FormData(form));
   const botao = form.querySelector("button");
   botao.disabled = true; // evita enviar duas vezes
-  botao.textContent = "Entrando...";
+  botao.textContent = "Entrando…";
   try {
     const resposta = await fetch("/api/login", {
       method: "POST",
