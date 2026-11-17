@@ -21,10 +21,6 @@ At desktop widths, use the Figma split composition: a 39% violet-to-teal brand p
 
 Professional screens use the branded sidebar, clear phase context, compact data panels, and restrained color for status and chart series. Keep charts labeled with units, time ranges, and explicit data quality. Missing or ineligible measurements appear as unavailable or insufficient, never as zero. The learner screen uses the original student module, its original maze colors, and no professional navigation or reports.
 
-## Project information page
-
-Expose academic context, task purpose, theoretical references, team, and MVP limits through the professional navigation. Reuse existing cards and typography. Keep the academic profile as version-controlled site content; it does not belong in participant or session tables. List team names only when confirmed, without inferred job titles.
-
 ## Illustrations and motion
 
 Use the generated transparent illustrations as supportive explanations, never as measurements:

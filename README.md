@@ -44,7 +44,7 @@ npm run start:xampp
 
 Acesse `http://localhost:3000/login` e entre com o profissional de demonstração:
 
-- nome exibido: `Victor Gabriel Ferreira Theodoro`
+- nome exibido: `Profissional de teste`
 - e-mail: `profissional@attobrain.com`
 - senha: `attobrain123`
 
