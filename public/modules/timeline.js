@@ -1,6 +1,7 @@
 import { drawBoard } from "./board.js";
 import { waveform } from "./charts.js";
 import { text, time } from "./format.js";
+import { eventNames } from "./monitor-view.js";
 export function bindTimeline(loadLive) {
   let data = null,
     live = false,
@@ -41,7 +42,7 @@ export function bindTimeline(loadLive) {
     waveform(document.getElementById("replay-eeg"), [channel]);
     text(
       "timeline-caption",
-      `${time(instant)} da sessão · ${run?.label ?? "Intervalo / preparação"} · ${event?.type ?? "Sem evento"} · entrada: mouse`,
+      `${time(instant)} da sessão · ${run?.label ?? "Descanso / preparação"} · ${eventNames[event?.type] ?? "Sem acontecimento"} · entrada demonstrativa provisória`,
     );
   }
   function setData(value, source) {
@@ -54,7 +55,7 @@ export function bindTimeline(loadLive) {
     );
     text(
       "import-status",
-      `${source} · sessão ${data.manifest.sessionId}. Inspeção somente leitura; não altera o motor.`,
+      `${source}. Somente para consulta: nada aqui altera a sessão.`,
     );
     show();
   }
@@ -64,29 +65,29 @@ export function bindTimeline(loadLive) {
       const file = event.target.files[0];
       if (!file) return;
       if (file.size > 512 * 1024 * 1024)
-        throw Error("Arquivo acima do limite de 512 MiB.");
+        throw Error("O arquivo é grande demais (máximo de 512 MB). Confirme se é um relatório baixado pelo Attobrain.");
       live = false;
       const value = JSON.parse(await file.text());
-      setData(value, "Arquivo importado");
+      setData(value, "Relatório salvo aberto");
       window.dispatchEvent(new CustomEvent("attobrain-import", { detail: value }));
       select.replaceChildren(
         ...data.events.map(
           (e) =>
             new Option(
-              `${time(e.sessionTime)} · ${e.type}`,
+              `${time(e.sessionTime)} · ${eventNames[e.type] ?? "Acontecimento da sessão"}`,
               String(e.sessionTime),
             ),
         ),
       );
     } catch (error) {
-      text("import-status", `Não foi possível importar: ${error.message}`);
+      text("import-status", `Não foi possível abrir o relatório: ${error.message} Escolha um arquivo baixado pelo botão "Baixar relatório da sessão".`);
     }
   };
   document.getElementById("inspect").onclick = async () => {
     try {
       const value = await loadLive(false, Number(select.value) || 0);
       live = true;
-      setData(value, "Dados ao vivo copiados para inspeção");
+      setData(value, "Dados da sessão em andamento");
       slider.value = select.value;
       show();
     } catch (error) {
@@ -99,7 +100,7 @@ export function bindTimeline(loadLive) {
     try {
       const value = await loadLive(false, instant);
       if (id !== requestId) return;
-      setData(value, "Dados ao vivo copiados para inspeção");
+      setData(value, "Dados da sessão em andamento");
       slider.value = instant;
       show();
     } catch (error) {
@@ -132,7 +133,7 @@ export function bindTimeline(loadLive) {
           .map(
             (e) =>
               new Option(
-                `${time(e.sessionTime)} · ${e.type}`,
+                `${time(e.sessionTime)} · ${eventNames[e.type] ?? "Acontecimento da sessão"}`,
                 String(e.sessionTime),
               ),
           ),
@@ -144,7 +145,7 @@ export function bindTimeline(loadLive) {
 export function validateImport(data) {
   if (![2, 3, 4].includes(data?.schemaVersion))
     throw Error(
-      "Versão incompatível. Exportações antigas não contêm dados para as métricas v2.",
+      "Este relatório é de uma versão antiga do sistema e não pode ser aberto.",
     );
   if (
     !data.manifest?.config ||
@@ -157,7 +158,7 @@ export function validateImport(data) {
     !Array.isArray(data.eeg?.blocks) ||
     data.eeg.blocks.length > 20000
   )
-    throw Error("Estrutura inválida.");
+    throw Error("O arquivo está incompleto ou não é um relatório do Attobrain.");
   if (data.schemaVersion >= 3 && (!data.report || !Array.isArray(data.report.evaluations) || !Array.isArray(data.report.training))) throw Error("Relatório inválido.");
   if (data.eeg.spectra !== undefined && (!Array.isArray(data.eeg.spectra) || data.eeg.spectra.length > 2000)) throw Error("Espectros inválidos.");
   const analysis = data.report?.analysis;

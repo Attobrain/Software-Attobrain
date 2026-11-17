@@ -72,13 +72,19 @@ Arquivos principais alterados: domínio de métricas/contatos e análise, consol
 
 ## Ilustrações
 
-Asset: `assets/evidence-guide.png`. Gerado pela ferramenta integrada de imagens, para o estado sem observações elegíveis. É decorativo, com texto explicativo independente e sem representar dados da sessão.
+`assets/evidence-guide.png` é a ilustração usada na primeira versão do estado sem observações elegíveis. A interface atual usa `assets/movement-chart-illustration.png` nesse estado: é uma relação conceitual entre percurso e gráfico e vem acompanhada de texto que avisa que a imagem não representa os dados da sessão. Os dois arquivos permanecem decorativos e com texto alternativo vazio.
 
 Prompt utilizado:
 
 > Create a tasteful small editorial 3D clay illustration for Attobrain's scientific maze session dashboard empty/insufficient data state: a folded ivory paper maze, a magnifying glass with a purple handle, and three small turquoise stepping stones suggesting evidence being gathered. Muted violet #7346da, turquoise #00baa8, warm white. Soft studio lighting, calm professional educational mood, clean silhouette, centered compact composition, plenty of clear margins. No words, letters, numbers, logos, charts, medical symbols, brains, diagnoses or decorative background. Transparent background. This is an illustrative empty-state asset, not a data visualization.
 
 Assets adicionais, gerados pela mesma ferramenta integrada: `assets/screens-guide.png`, para a conexão das telas, e `assets/report-guide.png`, para identificar o perfil de resultados. O primeiro possui flutuação suave em CSS, desativada por `prefers-reduced-motion`. Os indicadores de conexão e qualidade continuam usando estados reais. Ilustrações decorativas possuem alternativa vazia e ficam fora da impressão.
+
+`assets/attention-network-art.png` foi adicionada ao monitoramento como arte conceitual. Ao lado dela, um esquema vetorial didático explica as redes dorsal (FEF e IPS/SPL) e ventral (TPJ e córtex frontal ventral), além de posições de eletrodos EEG do sistema 10–20. Os pontos do couro cabeludo não são apresentados como leitura isolada das regiões abaixo deles. O seletor destaca cada rede para apoiar a explicação; nenhuma animação ou marcação representa a atividade do participante. A seção informa que o sinal atual é sintético e inclui links às referências científicas de redes de atenção, nomenclatura dos eletrodos e localização de fontes EEG.
+
+Na revisão visual posterior, foram adicionados três PNGs transparentes otimizados: `assets/maze-route-illustration.png` (entrada e espera do participante), `assets/movement-chart-illustration.png` (estado vazio do gráfico e falta de evidências) e `assets/synthetic-signal-illustration.png` (painel avançado de simulação). Eles não codificam medições nem regiões cerebrais. A arte da onda aparece somente junto ao aviso de que não há sensor ou dado fisiológico.
+
+Na ampliação visual de novembro de 2026, mais cinco PNGs transparentes apresentam a visão futura do produto: `assets/gaze-maze-vision.png` (trajetória visual conceitual), `assets/visual-focus-concept.png` (camada de foco ilustrativa), `assets/future-sensor-concept.png` (possível hardware futuro), `assets/neural-signal-concept.png` (sinal neurofisiológico simbólico) e `assets/explainable-results-concept.png` (estrutura explicável de relatório). Eles são usados em telas de apresentação, estados vazios e painel avançado, sempre com aviso de que não são leituras do participante. Animações CSS leves afetam somente essas artes; dados e trajetórias reais não recebem movimento decorativo.
 
 Prompt de `screens-guide.png`:
 

@@ -1,16 +1,17 @@
 import { text, number, time, escape } from "./format.js";
-const eventNames = {
+export const eventNames = {
   configured: "Sessão configurada",
+  "draft-updated": "Configuração ajustada",
   prepared: "Percurso preparado",
   started: "Atividade iniciada",
   resumed: "Atividade retomada",
   pause: "Atividade pausada",
-  contact: "Contato com parede",
-  checkpoint: "Checkpoint alcançado",
+  contact: "Encostou na parede",
+  checkpoint: "Ponto do caminho alcançado",
   "run-ended": "Etapa finalizada",
   "session-ended": "Sessão encerrada",
-  "eeg-modulation": "Modulação sintética",
-  "engine-gap": "Interrupção técnica",
+  "eeg-modulation": "Ajuste do sinal simulado",
+  "engine-gap": "Falha técnica momentânea",
   "session-limit": "Limite da sessão atingido",
 };
 export function updateMonitor(state, events) {
@@ -27,16 +28,18 @@ export function updateMonitor(state, events) {
   document.getElementById("movement-status").dataset.state = state.state;
   const m = state.metrics,
     hasSamples = m?.activeMs > 0;
+  document.getElementById("trend-empty").hidden = hasSamples;
+  document.getElementById("activity-trend").hidden = !hasSamples;
   text("speed", hasSamples ? number(m.speed, 3) : "—");
   text("low", hasSamples ? `${number(m.lowMs / 1000, 1)} s` : "—");
-  text("distance", hasSamples ? `${number(m.distance, 2)} larguras` : "—");
-  text("variability", hasSamples ? `CV ${number(m.velocity.cv, 2)}` : "—");
+  text("distance", hasSamples ? `${number(m.distance, 2)} larguras do quadro` : "—");
+  text("variability", hasSamples ? `${number(m.velocity.cv, 2)} (quanto maior, mais irregular)` : "—");
   text("backtracks", hasSamples ? String(m.backtracks.length) : "—");
   text(
     "trend-caption",
     hasSamples
-      ? `Tempo ativo · velocidade em larguras/s. ${m.collisionEpisodeCount ?? "—"} episódios; ${m.contacts.length} registros por parede nesta atividade.`
-      : "O gráfico aparecerá quando a atividade começar.",
+      ? `A linha mostra o ritmo registrado do percurso; os marcadores indicam contatos com as paredes. Foram ${m.collisionEpisodeCount ?? "—"} contatos nesta atividade. A entrada é provisória nesta versão.`
+      : "O gráfico usa somente registros da atividade atual.",
   );
   const phase = state.closed
     ? "Sessão encerrada"
@@ -73,10 +76,10 @@ export function updateMonitor(state, events) {
       ? recent
           .map(
             (e) =>
-              `<li><span class="event-marker" aria-hidden="true"></span><div><strong>${escape(eventNames[e.type] ?? "Evento da sessão")}</strong><span>${escape(e.type === "pause" ? ({ manual: "Pausa solicitada", disconnected: "Conexão interrompida", "student-hidden": "Tela do aluno oculta" }[e.data?.reason] ?? "Pausa técnica") : e.runId === state.runId ? state.label : "Sessão")}</span></div><time>${time(e.sessionTime)}</time></li>`,
+              `<li><span class="event-marker" aria-hidden="true"></span><div><strong>${escape(eventNames[e.type] ?? "Acontecimento da sessão")}</strong><span>${escape(e.type === "pause" ? ({ manual: "Pausa solicitada", disconnected: "Conexão interrompida", "student-hidden": "Tela do aluno oculta" }[e.data?.reason] ?? "Pausa automática") : e.runId === state.runId ? state.label : "Sessão")}</span></div><time>${time(e.sessionTime)}</time></li>`,
           )
           .join("")
-      : '<li class="event-empty">Os eventos aparecerão durante a sessão.</li>';
+      : '<li class="event-empty">Os acontecimentos aparecerão durante a sessão.</li>';
   }
 }
 let bandSignature = "";
@@ -88,7 +91,7 @@ export function updateBands(spectral) {
   if (!spectral?.valid) {
     container.classList.add("is-empty");
     container.textContent =
-      "As bandas estarão disponíveis após oito segundos contínuos de sinal.";
+      "Os valores aparecem após oito segundos contínuos de sinal.";
     return;
   }
   container.classList.remove("is-empty");

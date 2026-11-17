@@ -3,13 +3,14 @@ import { loadStudents, readStudents, saveStudent, removeStudent, studentForm, st
 import { drawBoard } from "./board.js";
 import { interpretationView } from "./interpretation-view.js";
 import { createReportTabs } from "./report-tabs.js";
+import { projectProfileView } from "./project-profile.js";
 
 export function createPlatform({ connect, command, state, credentials, socket, message, timeline, showImported, restoreLive, newSession }) {
   const page = document.getElementById("platform-view"), session = document.getElementById("session-view");
   let historyOf = null, historyRows = [], editId = null, creating = false, selected = null, returnToFlow = false, renderKey = "", previewTimer, pending = false, imported = null, previews = [];
   const technical = document.createElement("details");
   technical.id = "technical-panel"; technical.className = "card technical-panel";
-  technical.innerHTML = '<summary>Linha do tempo e demonstração técnica</summary>';
+  technical.innerHTML = '<summary>Detalhes da sessão (avançado)</summary>';
   for (const id of ["timeline", "eeg-panel", "diagnostics"]) technical.append(document.getElementById(id));
   session.append(technical);
   const reportActions = document.createElement("div"); reportActions.className = "controls report-actions";
@@ -21,7 +22,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   notes.append(document.getElementById("notes").closest("label"), document.getElementById("unsaved"));
   document.getElementById("result-panel").insertBefore(notes, document.getElementById("result-technical"));
   const reportTabs = createReportTabs(technical, notes);
-  document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Inspecionar linha do tempo e EEG sintético</button>');
+  document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Ver detalhes da sessão (avançado)</button>');
   document.getElementById("result-new").onclick = newSession;
   const heading = (title, description) => `<section class="page-heading"><div><span class="eyebrow">PLATAFORMA ATTOBRAIN</span><h1 tabindex="-1">${title}</h1><p>${description}</p></div></section>`;
   function route() {
@@ -45,7 +46,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     document.getElementById("flow-steps").innerHTML = `<p class="step-count">Etapa ${Math.max(1, index + 1)} de ${list.length} · ${esc(list[index]?.[1] ?? "Resultados")}</p><ol class="guided-steps">${list.map(([key, title], i) => {
       const outcome = s.workflow.runStates?.[key];
       const interrupted = ["ABORTED", "TIMED_OUT"].includes(outcome);
-      const caption = outcome === "ABORTED" ? "Interrompida" : outcome === "TIMED_OUT" ? "Tempo encerrado" : outcome === "PAUSED" ? "Pausada" : outcome === "COMPLETED" ? "Concluída" : i === index ? "Atual" : i < index ? "Concluída" : "Bloqueada";
+      const caption = outcome === "ABORTED" ? "Interrompida" : outcome === "TIMED_OUT" ? "Tempo encerrado" : outcome === "PAUSED" ? "Pausada" : outcome === "COMPLETED" ? "Concluída" : i === index ? "Atual" : i < index ? "Concluída" : "Aguardando";
       return `<li class="${i === index ? "current" : i < index ? "done" : "locked"} ${interrupted ? "interrupted" : ""}" ${i === index ? 'aria-current="step"' : ""}><span>${i < index && !interrupted ? "✓" : i + 1}</span>${title}<small>${caption}</small></li>`;
     }).join("")}</ol>`;
   }
@@ -56,7 +57,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     for (const name of ["level", "channels", "sampleRate"]) config[name] = Number(config[name]);
     config.artifacts = config.artifacts === "true";
     socket.timeout(4000).emit("preview", { config }, (error, reply) => {
-      if (error || reply?.error) { document.getElementById("preview-description").textContent = reply?.error ?? "Sem conexão para a prévia."; return; }
+      if (error || reply?.error) { document.getElementById("preview-description").textContent = reply?.error ?? "Não foi possível mostrar a prévia agora. Verifique a conexão e tente alterar uma opção novamente."; return; }
       if (route() !== "session" || state()?.workflow.step !== "configuration") return;
       previews = reply.preview;
       const selector = document.getElementById("preview-phase");
@@ -64,13 +65,13 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       selector.replaceChildren(...previews.map(p => new Option(p.label, p.label)));
       if (previews.some(p => p.label === previous)) selector.value = previous;
       drawBoard(document.getElementById("preview-board"), previews.find(p => p.label === selector.value));
-      document.getElementById("preview-description").textContent = `${reply.preview[0].label} · ${config.level} × ${config.level}. ${config.mode === "protocol" ? "Conjunto versionado A/B/C; sementes fixas para comparação." : `Exploração · semente ${config.seed}; sem tendência A/B/C.`} Nenhuma coleta iniciada.`;
+      document.getElementById("preview-description").textContent = `${reply.preview[0].label} · labirinto de ${config.level} × ${config.level}. ${config.mode === "protocol" ? "As atividades A, B e C usam labirintos fixos, para poderem ser comparadas." : `Exploração · código do labirinto ${config.seed}; sem comparação entre atividades.`} Nada foi registrado ainda.`;
     });
   }
   function show() {
     const current = route(), s = state();
     if (current === "session" && imported) { imported = null; renderKey = ""; timeline.reset(); restoreLive(); }
-    const platformPage = ["overview", "students"].includes(current);
+    const platformPage = ["overview", "students", "project"].includes(current);
     page.hidden = !platformPage; session.hidden = platformPage;
     document.querySelectorAll(".side-nav .nav-link").forEach(link => {
       const active = link.hash === `#${platformPage ? current : "session"}`;
@@ -79,13 +80,14 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     });
     if (current === "results" && !s && !imported && !credentials()?.id) {
       page.hidden = false; session.hidden = true;
-      page.innerHTML = `${heading("Abrir resultado", "Relatórios importados ficam somente na memória desta página.")}<section class="card"><p>Após recarregar, selecione novamente o arquivo JSON para inspecionar seu relatório.</p><button data-flow="import">Abrir relatório JSON</button></section>`;
+      page.innerHTML = `${heading("Abrir resultado", "Veja um relatório que você baixou antes.")}<section class="card"><p>Escolha o arquivo do relatório salvo no seu computador. Ele é só para consulta e não altera o histórico do aluno. Se a página for recarregada, abra o arquivo de novo.</p><button data-flow="import">Abrir relatório salvo</button></section>`;
       return;
     }
     if (platformPage) {
       technical.hidden = true;
-      if (current === "overview") page.innerHTML = `${heading("Painel do profissional", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice"><strong>Um ambiente de demonstração científica</strong><p>Interações do mouse são observadas durante o labirinto. O EEG é sintético; não há captura de sinais cerebrais ou diagnóstico.</p></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Cadastre seus alunos e consulte o histórico de sessões de cada um.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto visual</h2><p>Uma preparação guiada, com treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Revisar um resultado exportado</h2><p>Abra um JSON v2, v3 ou v4 para inspeção local, sem modificar uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório JSON</button></section>`;
-      else if (creating || editId) page.innerHTML = `${heading("Cadastro de aluno", "Os dados ficam salvos no banco de dados do sistema.")}${studentForm(editId ? readStudents().find(v => String(v.id) === String(editId)) : {})}`;
+      if (current === "overview") page.innerHTML = `${heading("Painel do profissional", "Prepare uma atividade, acompanhe o percurso e compreenda os resultados.")}<section class="platform-notice overview-notice"><div class="overview-notice-copy"><span class="eyebrow">VISÃO FUTURA · INTERFACE CONCEITUAL</span><strong>Um labirinto preparado para novas camadas de leitura</strong><p>Veja como uma trajetória de olhar e sinais neurofisiológicos poderão se relacionar ao percurso. As artes antecipam essa experiência; os sensores ainda não estão conectados.</p><details class="simulation-disclosure"><summary>Como os dados são demonstrados hoje?</summary><p>O percurso usa uma entrada provisória para movimentar o ponto no labirinto. A onda neurofisiológica é gerada artificialmente e não entra na análise da sessão.</p></details><a class="project-overview-link" href="#project">Conheça a proposta e os limites do projeto →</a></div><img class="overview-future-art art-float" src="/assets/future-sensor-concept.png" alt="Conceito visual de sensores oculares e faixa neurofisiológica ao lado de um labirinto" width="1000" height="667" fetchpriority="high"></section><section class="future-capabilities" aria-labelledby="future-capabilities-title"><div class="section-heading"><div><span class="eyebrow">POSSIBILIDADES DE EVOLUÇÃO</span><h2 id="future-capabilities-title">Uma experiência, diferentes camadas</h2></div><span class="concept-badge">Simulações visuais</span></div><div class="future-capability-grid"><article class="future-capability-card"><div class="future-capability-art art-float"><img src="/assets/gaze-maze-vision.png" alt="" width="1000" height="667" loading="lazy"></div><span class="future-layer-status">VISÃO CONCEITUAL</span><h3>Trajetória do olhar</h3><p>Pontos de fixação poderiam ser apresentados sobre o percurso quando houver integração com sensor ocular.</p></article><article class="future-capability-card"><div class="future-capability-art art-float art-delay-1"><img src="/assets/visual-focus-concept.png" alt="" width="1000" height="667" loading="lazy"></div><span class="future-layer-status">HIPÓTESE DE INTERFACE</span><h3>Foco visual</h3><p>Uma forma didática de explicar para onde a leitura visual se orienta, sem atribuir atenção ou diagnóstico.</p></article><article class="future-capability-card"><div class="future-capability-art art-float art-delay-2"><img src="/assets/neural-signal-concept.png" alt="" width="1000" height="667" loading="lazy"></div><span class="future-layer-status">SINAL SINTÉTICO</span><h3>Atividade neurofisiológica</h3><p>O painel avançado demonstra o formato de uma onda; nenhum dado cerebral real é coletado.</p></article></div></section><div class="home-grid"><article class="card"><span class="home-number">01</span><h2>Alunos</h2><p>Cadastre seus alunos e consulte o histórico de sessões de cada um.</p><a href="#students" class="button secondary">Consultar alunos →</a></article><article class="card"><span class="home-number">02</span><h2>Labirinto</h2><p>Prepare a sessão passo a passo: treino e atividades A, B e C.</p><a href="#session" class="button">${credentials()?.id ? "Continuar sessão" : "Preparar atividade"} →</a></article></div><section class="card import-card"><h2>Abrir um relatório salvo</h2><p>Reveja o relatório de uma sessão que você baixou antes. É só para consulta e não interfere em uma sessão em andamento.</p><button class="secondary" data-flow="import">Abrir relatório salvo</button></section>`;
+      else if (current === "project") page.innerHTML = projectProfileView();
+      else if (creating || editId) page.innerHTML = `${heading("Cadastro de aluno", "Os dados ficam salvos no sistema e podem ser editados depois.")}${studentForm(editId ? readStudents().find(v => String(v.id) === String(editId)) : {})}`;
       else if (historyOf) page.innerHTML = `${heading("Histórico do aluno", "Resumo das sessões do labirinto já encerradas.")}${historyPage(readStudents().find(v => String(v.id) === String(historyOf)), historyRows)}`;
       else page.innerHTML = studentsPage();
       return;
@@ -122,7 +124,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       renderKey = key;
       const titles = { participant: "Selecionar aluno", configuration: "Configurar o labirinto", review: "Tudo pronto para começar?", training: "Treinamento", activity: "Exploração", A: "Atividade A", B: "Atividade B", C: "Atividade C" };
       document.getElementById("flow-title").textContent = titles[w.step] ?? "Sessão";
-      document.getElementById("flow-description").textContent = execution ? `${s.participant?.name ?? "Participante demonstrativo"} · As análises completas estarão disponíveis ao finalizar.` : "Uma etapa de cada vez, com os dados necessários para começar.";
+      document.getElementById("flow-description").textContent = execution ? `${s.participant?.name ?? "Participante demonstrativo"} · A análise completa aparece ao final da sessão.` : "Uma etapa de cada vez, com os dados necessários para começar.";
       const wizard = document.getElementById("wizard-panel");
       if (w.step === "participant") wizard.innerHTML = studentsPage(true);
       if (config) {
@@ -131,7 +133,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
         document.getElementById("activity-setup").open = true;
         updatePreview();
       }
-      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">REVISÃO</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Protocolo</dt><dd>${s.config.mode === "protocol" ? "Treinamento + A/B/C" : "Exploração"}</dd><dt>Geometria</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Entrada</dt><dd>Mouse · sem rastreamento ocular</dd><dt>Duração máxima</dt><dd>Treino ${s.config.trainingSeconds} s · atividade ${s.config.activitySeconds} s</dd><dt>Intervalos A/B/C</dt><dd>${s.config.intervalSeconds} s</dd><dt>Simulação EEG</dt><dd>${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente" : "didática"}</dd></dl><p>Dados comportamentais temporários. EEG sintético excluído da interpretação.</p><button class="secondary" data-flow="back" data-step="configuration">Revisar configuração</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><img class="connection-illustration" src="/assets/screens-guide.png" alt="" width="180" height="130"><p>Abra a janela do aluno e deixe-a visível ao lado deste painel. Alternar abas pode ocultar a atividade e provocar uma pausa.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Se a janela não abrir, permita o popup deste site e tente novamente.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
+      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">CONFERÊNCIA</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Tipo de sessão</dt><dd>${s.config.mode === "protocol" ? "Treino + atividades A, B e C" : "Uma atividade livre (exploração)"}</dd><dt>Tamanho do labirinto</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Interação demonstrativa</dt><dd>Trajetória visual com entrada provisória</dd><dt>Tempo máximo</dt><dd>Treino ${s.config.trainingSeconds} s · cada atividade ${s.config.activitySeconds} s</dd><dt>Descanso entre atividades</dt><dd>${s.config.intervalSeconds} s</dd></dl><details class="parameters"><summary>Como as leituras são simuladas</summary><p>O ponteiro movimenta o ponto como entrada provisória para demonstrar o percurso. Não há sensor ocular conectado. O sinal neurofisiológico é gerado por software e não entra na análise.</p><p>Sinal sintético: ${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente da atividade" : "reação didática à interação"}.</p></details><p>A análise descreve os registros do percurso e não atribui atenção nem atividade cerebral.</p><button class="secondary" data-flow="back" data-step="configuration">Voltar às configurações</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><img class="connection-illustration" src="/assets/screens-guide.png" alt="" width="180" height="130"><p>Abra a janela do aluno e deixe-a visível ao lado deste painel. Alternar abas pode ocultar a atividade e provocar uma pausa.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Se a janela não abrir, permita o popup deste site e tente novamente.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
       if (result) {
         document.getElementById("interpretation").innerHTML = interpretationView(s.report, s.participant, s.id, false, s.endReason);
         reportTabs.activate("summary");
@@ -160,7 +162,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   document.getElementById("preview-phase").onchange = event => {
     const chosen = previews.find(p => p.label === event.target.value);
     drawBoard(document.getElementById("preview-board"), chosen);
-    if (chosen) document.getElementById("preview-description").textContent = `${chosen.label} · ${chosen.maze.cols} × ${chosen.maze.rows} · semente ${chosen.seed}. Prévia sem coleta. Geometria rastreável; não implica dificuldade humana equivalente.`;
+    if (chosen) document.getElementById("preview-description").textContent = `${chosen.label} · labirinto de ${chosen.maze.cols} × ${chosen.maze.rows} · código ${chosen.seed}. Prévia: nada foi registrado. Formato parecido não garante a mesma dificuldade para o aluno.`;
   };
   document.addEventListener("input", event => {
     if (event.target.id !== "student-search") return;
@@ -231,7 +233,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     try {
       const original = event.detail;
       const data = original.report ? original : { ...original, report: {
-        analysis:null, description:"Arquivo histórico sem relatório de interpretação. Registros originais disponíveis para inspeção.",rules:[],aggregates:{},pairs:[],
+        analysis:null, description:"Este arquivo é antigo e não traz o relatório pronto. Os registros originais continuam disponíveis para consulta.",rules:[],aggregates:{},pairs:[],
         evaluations:original.runs.filter(r=>["A","B","C"].includes(r.label)).map(r=>({...r,runId:r.id})),
         training:original.runs.filter(r=>r.label==="Treinamento").map(r=>({...r,runId:r.id})),single:original.runs.filter(r=>r.label==="Exploração").map(r=>({...r,runId:r.id})),
       }};
@@ -242,7 +244,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       document.getElementById("result-technical").open = false;
       navigate("results");
       window.scrollTo({ top: 0, behavior: "instant" });
-    } catch (error) { message(`Arquivo incompatível: ${error.message}`); }
+    } catch (error) { message(`Não foi possível abrir este relatório. Confirme que o arquivo foi baixado pelo Attobrain (botão "Baixar relatório da sessão") e tente de novo. Detalhe: ${error.message}`); }
   });
   try { show(); } catch (error) { message(error.message); }
   loadStudents().then(() => { renderKey = ""; show(); }).catch(error => message(error.message));

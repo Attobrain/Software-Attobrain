@@ -57,6 +57,87 @@
   color: #627088;
   font-size: 11px;
 }
+.live-app .trend-empty {
+  display: grid;
+  grid-template-columns: minmax(130px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  min-height: 170px;
+  border-bottom: 1px solid #edf0f5;
+}
+.live-app .trend-empty img { display:block; width:100%; height:auto; object-fit:contain; }
+.live-app .trend-empty p { max-width:52ch; margin:0; color:#526078; font-size:13px; line-height:1.65; }
+.live-app .trend-empty small { display:block; max-width:58ch; margin-top:8px; color:#68748a; font-size:11px; line-height:1.55; }
+.live-app .signal-intro { display:flex; align-items:center; gap:16px; margin:10px 0 14px; }
+.live-app .signal-intro img { display:block; flex:0 0 132px; width:132px; height:92px; object-fit:contain; }
+.live-app .signal-intro .simulation-label { margin:0; font-size:12px; }
+.live-app .attention-guide { padding:22px; overflow:hidden; }
+.live-app .attention-guide-header { display:grid; grid-template-columns:minmax(0,1fr) 190px; align-items:center; gap:18px; padding-bottom:16px; border-bottom:1px solid #edf0f5; }
+.live-app .attention-guide-copy h2 { margin:5px 0 7px; color:#18243b; font-size:19px; line-height:1.3; text-wrap:balance; }
+.live-app .attention-guide-copy > p { max-width:58ch; margin:0; color:#526078; font-size:12px; line-height:1.6; }
+.live-app .attention-concept-tag,
+.live-app .attention-map-label { display:inline-flex; align-items:center; min-height:24px; border-radius:999px; padding:4px 9px; color:#5741a1; background:#f2efff; font-size:9px; font-weight:750; letter-spacing:.045em; }
+.live-app .attention-concept-tag { margin-top:10px; }
+.live-app .attention-art { margin:0; text-align:center; }
+.live-app .attention-art img { display:block; width:100%; height:112px; object-fit:contain; }
+.live-app .attention-art figcaption { margin-top:2px; color:#758096; font-size:9px; }
+.live-app .attention-honesty-note { margin:14px 0; padding:10px 12px; border-left:3px solid #6941c6; border-radius:0 8px 8px 0; color:#46546d; background:#f7f5ff; font-size:11px; line-height:1.65; }
+.live-app .attention-guide-grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr); gap:14px; align-items:stretch; }
+.live-app .attention-map-panel,
+.live-app .attention-electrode-panel { min-width:0; border:1px solid #e5e9f0; border-radius:12px; padding:14px; background:#fff; }
+.live-app .attention-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.live-app .attention-panel-heading .eyebrow { font-size:9px; }
+.live-app .attention-panel-heading h3 { margin:4px 0 0; color:#17243b; font-size:14px; text-wrap:balance; }
+.live-app .attention-panel-heading .attention-map-label { flex:0 0 auto; color:#55647d; background:#f1f3f7; font-size:8px; }
+.live-app .attention-map { margin:6px 0 0; }
+.live-app .attention-map svg { display:block; width:100%; height:auto; max-height:250px; }
+.live-app .brain-outline { fill:#f8f7fc; stroke:#aeb8ca; stroke-width:2; }
+.live-app .brain-lobe { stroke:#fff; stroke-width:2; opacity:.76; }
+.live-app .lobe-frontal { fill:#e9e3ff; }
+.live-app .lobe-parietal { fill:#e3efff; }
+.live-app .lobe-temporal { fill:#e0f4f1; }
+.live-app .lobe-occipital { fill:#f1eafb; }
+.live-app .brain-grooves { fill:none; stroke:#c8cfdb; stroke-width:2; stroke-linecap:round; opacity:.8; }
+.live-app .attention-network-lines { fill:none; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; transition:opacity 180ms ease; }
+.live-app .attention-network-lines path { stroke:currentColor; stroke-dasharray:6 7; }
+.live-app .attention-network-lines circle { fill:currentColor; stroke:#fff; stroke-width:3; }
+.live-app .attention-network-lines text { fill:currentColor; stroke:#fff; stroke-width:4px; paint-order:stroke; font:700 12px Manrope, sans-serif; }
+.live-app .network-dorsal { color:#6941c6; }
+.live-app .network-ventral { color:#087f73; }
+.live-app .attention-map[data-network="dorsal"] .network-ventral,
+.live-app .attention-map[data-network="ventral"] .network-dorsal { opacity:.2; }
+.live-app .brain-orientation { fill:#768198; font:700 9px Manrope, sans-serif; letter-spacing:.08em; }
+.live-app .attention-network-switch { display:flex; flex-wrap:wrap; gap:7px; margin-top:2px; }
+.live-app .attention-network-switch button { min-height:44px; border:1px solid #dbe1eb; border-radius:8px; padding:8px 11px; color:#33415a; background:#fff; font:650 10px Manrope, sans-serif; cursor:pointer; touch-action:manipulation; transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease; }
+.live-app .attention-network-switch button:hover { border-color:#a99add; background:#faf9ff; }
+.live-app .attention-network-switch button[aria-pressed="true"] { border-color:#6941c6; color:#5137a7; background:#f5f2ff; }
+.live-app .attention-network-switch button:focus-visible,
+.live-app .attention-references a:focus-visible { outline:3px solid #8b71e2; outline-offset:2px; }
+.live-app .attention-network-explanation { min-height:58px; margin:9px 0 0; color:#40506a; font-size:11px; line-height:1.6; }
+.live-app .attention-map-footnote { margin:7px 0 0; padding-top:8px; border-top:1px solid #edf0f5; color:#717c90; font-size:9px; line-height:1.55; }
+.live-app .scalp-map-figure { margin:8px auto 0; max-width:290px; }
+.live-app .scalp-map { display:block; width:100%; height:auto; }
+.live-app .scalp-head { fill:#f8f9fc; stroke:#aeb8ca; stroke-width:2; }
+.live-app .scalp-nose,.live-app .scalp-ear { fill:none; stroke:#aeb8ca; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.live-app .scalp-midline { stroke:#d9deea; stroke-width:1; stroke-dasharray:4 4; }
+.live-app .electrode-group circle { stroke:#fff; stroke-width:2; }
+.live-app .electrode-front circle { fill:#6941c6; }
+.live-app .electrode-central circle { fill:#8894a8; }
+.live-app .electrode-parietal circle { fill:#087f73; }
+.live-app .electrode-group text { fill:#38455b; font:700 10px Manrope, sans-serif; }
+.live-app .electrode-group text:nth-of-type(2) { text-anchor:middle; }
+.live-app .electrode-group text:nth-of-type(3) { text-anchor:start; }
+.live-app .scalp-orientation { fill:#768198; font:700 8px Manrope, sans-serif; letter-spacing:.08em; text-anchor:middle; }
+.live-app .scalp-map-figure figcaption { margin-top:-2px; color:#717c90; font-size:9px; line-height:1.5; text-align:center; }
+.live-app .attention-electrode-copy { margin-top:10px; padding-top:9px; border-top:1px solid #edf0f5; }
+.live-app .attention-electrode-copy p { margin:0 0 7px; color:#526078; font-size:10px; line-height:1.6; }
+.live-app .attention-electrode-copy p:last-child { margin-bottom:0; }
+.live-app .attention-electrode-copy strong { color:#25334b; }
+.live-app .attention-references { margin-top:12px; padding-top:10px; border-top:1px solid #edf0f5; color:#526078; font-size:10px; }
+.live-app .attention-references summary { width:max-content; max-width:100%; min-height:44px; display:flex; align-items:center; cursor:pointer; font-weight:700; }
+.live-app .attention-references ul { display:grid; gap:6px; margin:7px 0 0; padding-left:19px; line-height:1.5; }
+.live-app .attention-references a { color:#51409a; text-underline-offset:2px; }
+.live-app .attention-references a:hover { color:#31216f; }
 .live-app .live-indicator {
   display: flex;
   align-items: center;
@@ -353,4 +434,10 @@
 .live-app .text-link svg {
   width: 14px;
   height: 14px;
+}
+@media (max-width:600px) {
+  .live-app .trend-empty { grid-template-columns:minmax(0,1fr); justify-items:center; gap:4px; padding:10px 0 16px; text-align:center; }
+  .live-app .trend-empty img { width:min(220px,75%); }
+  .live-app .signal-intro { align-items:flex-start; }
+  .live-app .signal-intro img { flex-basis:88px; width:88px; height:70px; }
 }

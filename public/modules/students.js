@@ -2,6 +2,7 @@ import { escape as esc } from "./format.js";
 
 // Alunos vêm do servidor (MySQL). A lista fica em memória para a tela desenhar de forma simples.
 let alunos = [];
+let carregado = false; // enquanto a primeira busca não termina, a lista mostra "Carregando"
 
 async function chamar(url, opcoes = {}) {
   const resposta = await fetch(url, {
@@ -16,7 +17,11 @@ async function chamar(url, opcoes = {}) {
 }
 
 export async function loadStudents() {
-  alunos = await chamar("/api/alunos");
+  try {
+    alunos = await chamar("/api/alunos");
+  } finally {
+    carregado = true;
+  }
   return alunos;
 }
 export const readStudents = () => alunos;
@@ -41,12 +46,12 @@ export function studentForm(a = {}) {
 }
 
 export function studentList(lista, selection = false, selected = null) {
-  if (!lista.length) return '<p class="empty-state">Nenhum aluno encontrado.</p>';
+  if (!lista.length) return `<p class="empty-state" role="status">${carregado ? "Nenhum aluno encontrado." : "Carregando alunos..."}</p>`;
   const linhas = lista.map(v => {
     const id = esc(String(v.id));
     const acoes = selection
       ? `<button class="${String(selected) === String(v.id) ? "" : "secondary"}" data-student="select" data-id="${id}" aria-label="Selecionar ${esc(v.nome)}">${String(selected) === String(v.id) ? "Selecionado" : "Selecionar"}</button>`
-      : `<button class="secondary" data-student="history" data-id="${id}" aria-label="Histórico de ${esc(v.nome)}">Histórico</button><button class="secondary" data-student="edit" data-id="${id}" aria-label="Editar ${esc(v.nome)}">Editar</button><button class="secondary" data-student="delete" data-id="${id}" aria-label="Excluir ${esc(v.nome)}">Excluir</button>`;
+      : `<button class="secondary" data-student="history" data-id="${id}" aria-label="Histórico de ${esc(v.nome)}">Histórico</button><button class="secondary" data-student="edit" data-id="${id}" aria-label="Editar ${esc(v.nome)}">Editar</button><button class="danger" data-student="delete" data-id="${id}" aria-label="Excluir ${esc(v.nome)}">Excluir</button>`;
     return `<tr><td>${esc(v.nome)}</td><td>${esc(v.escola ?? "")}</td><td>${esc(v.turma ?? "")}</td><td><div class="controls">${acoes}</div></td></tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="result-table"><thead><tr><th>Aluno</th><th>Escola</th><th>Turma</th><th>Ações</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
@@ -57,6 +62,6 @@ export function historyPage(aluno, sessoes) {
   const linhas = sessoes.map(s => `<tr><td>${esc(new Date(s.realizadaEm).toLocaleString("pt-BR"))}</td><td>${esc(s.nivel ?? "-")}</td><td>${esc(String(s.fasesConcluidas))}</td><td>${esc(String(s.tempoAtivoSeg))} s</td><td>${esc(String(s.totalColisoes))}</td><td>${esc(motivos[s.motivoFim] ?? "-")}</td></tr>`).join("");
   const tabela = sessoes.length
     ? `<div class="table-wrap"><table class="result-table"><thead><tr><th>Data</th><th>Nível</th><th>Fases concluídas</th><th>Tempo ativo</th><th>Colisões</th><th>Encerramento</th></tr></thead><tbody>${linhas}</tbody></table></div>`
-    : '<p class="empty-state">Este aluno ainda não tem sessões registradas.</p>';
+    : '<p class="empty-state" role="status">Este aluno ainda não tem sessões registradas.</p>';
   return `<section class="card"><div class="section-heading"><h2>Histórico de ${esc(aluno?.nome ?? "aluno")}</h2><button class="secondary" data-student="cancel">Voltar</button></div>${tabela}</section>`;
 }

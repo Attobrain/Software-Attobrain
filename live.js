@@ -13,6 +13,7 @@ import { metricDetails, renderReport } from "./public/modules/results.js";
 import { bindControls } from "./public/modules/controls.js";
 import { studentShell, renderStudent } from "./public/modules/student-view.js";
 import { updateMonitor, updateBands } from "./public/modules/monitor-view.js";
+import { bindAttentionExplorer } from "./public/modules/attention-explainer.js";
 const serverUrl = window.ATTOBRAIN_CONFIG?.serverUrl || location.origin;
 const student = location.pathname === "/aluno",
   root = document.getElementById("root"),
@@ -38,6 +39,7 @@ try {
 }
 document.body.classList.add(student ? "student-app" : "professional-app");
 root.innerHTML = student ? studentShell() : professionalLayout();
+if (!student) bindAttentionExplorer(root);
 const studentEffects = student ? createStudentEffects(document.getElementById("student-sound")) : null;
 const message = (value) => {
   if (student) {
@@ -73,8 +75,8 @@ function join() {
 }
 socket.on("connect", join);
 socket.on("connect_error", () => {
-  text("connection", "Servidor indisponível · tentando reconectar");
-  message("Não foi possível conectar ao servidor da atividade. Verifique a conexão e a disponibilidade do serviço.");
+  text("connection", "Sem conexão com o sistema · tentando reconectar");
+  message("Não foi possível conectar ao sistema. Verifique sua internet e se o programa do Attobrain está ligado; depois recarregue a página.");
 });
 function connect(retry = false) {
   if (retry) { socket.disconnect(); joinPromise = null; }
@@ -99,14 +101,14 @@ function command(type, extra = {}) {
       id: credentials?.id, commandId: crypto.randomUUID(), type,
       expectedRevision: state?.workflow?.controlRevision, ...extra,
     }, (error, reply) => {
-      const problem = error ? "Sem confirmação. Confira o estado antes de tentar novamente." : reply?.error;
+      const problem = error ? "O sistema não respondeu. Confira a tela e tente de novo." : reply?.error;
       if (problem) { message(problem); reject(Error(problem)); }
       else { message(""); resolve(reply); }
     });
   });
 }
 async function exportData(download, instant = 0) {
-  if (!credentials) throw Error("Conecte a sessão.");
+  if (!credentials) throw Error("A sessão ainda não está conectada. Aguarde alguns segundos e tente de novo.");
   const response = await fetch(
     `${serverUrl}/api/sessions/${credentials.id}/${download ? "export" : `inspect?time=${Number(instant)}`}`,
     {
@@ -116,15 +118,15 @@ async function exportData(download, instant = 0) {
       },
     },
   );
-  if (!response.ok) throw Error("Não foi possível exportar a sessão.");
+  if (!response.ok) throw Error("Não foi possível baixar o relatório. Tente de novo; se continuar, use \"Imprimir relatório\" para guardar os resultados.");
   if (download) {
     const url = URL.createObjectURL(await response.blob()),
       a = document.createElement("a");
     a.href = url;
-    a.download = `attobrain-${credentials.id}.json`;
+    a.download = reportFileName(state?.participant?.name);
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    message("JSON exportado. Novos registros exigem nova exportação.");
+    message("Relatório baixado. Se a sessão continuar, baixe de novo no final para incluir os registros novos.");
     return null;
   }
   return response.json();
@@ -138,14 +140,19 @@ timeline = bindControls({
   exportData,
   message,
 });
+function reportFileName(name) {
+  const slug = String(name ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  const now = new Date(), pad = (n) => String(n).padStart(2, "0");
+  return `relatorio-${slug || "sessao"}-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.json`;
+}
 function newSession() { document.getElementById("new-session").click(); }
 function showImported(data) {
   eegChannels = [];
   spectrumData = data.eeg.spectra?.at(-1) ?? null;
   for (const block of data.eeg.blocks.slice(-90)) acceptBlock(block);
-  document.getElementById("channel").replaceChildren(...Array.from({ length: data.manifest.config.channels ?? 1 }, (_, i) => new Option(`V${i + 1}`, String(i))));
+  document.getElementById("channel").replaceChildren(...Array.from({ length: data.manifest.config.channels ?? 1 }, (_, i) => new Option(`Canal ${i + 1}`, String(i))));
   text("technical", JSON.stringify({ manifest: data.manifest, quality: data.report.analysis?.quality, originalImportedReport: true }, null, 2));
-  text("connection", "Arquivo importado · somente leitura");
+  text("connection", "Relatório salvo aberto · somente leitura");
   renderReport(data.report);
   comparison(document.getElementById("comparison-chart"), data.report.analysis);
   results = data.runs.map(r => ({ ...r, result: r.result }));
@@ -153,7 +160,7 @@ function showImported(data) {
   document.getElementById("notes").disabled = true;
   document.getElementById("export").disabled = true;
   document.getElementById("inspect").disabled = true;
-  text("unsaved", "Arquivo original importado · inspeção local somente leitura.");
+  text("unsaved", "Você está vendo um relatório salvo. Ele serve só para consulta e não pode ser alterado.");
 }
 function restoreLive() {
   results = []; eegChannels = []; spectrumData = null; lastReport = "";
@@ -178,7 +185,7 @@ socket.on("snapshot", (incoming) => {
   }
   text(
     "connection",
-    platform?.isImported() ? "Arquivo importado · sessão ao vivo preservada" : `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
+    platform?.isImported() ? "Relatório salvo aberto · sua sessão em andamento foi preservada" : `${state.connected.student ? "Aluno conectado" : "Aguardando aluno"} · ${state.connected.professional ? "Profissional conectado" : "Profissional desconectado"}`,
   );
   if (student) {
     studentEffects?.update(state, previous);
@@ -197,7 +204,7 @@ socket.on("snapshot", (incoming) => {
   text(
     "interval",
     state.intervalRemaining > 0
-      ? `Pausa mínima: ${Math.ceil(state.intervalRemaining / 1000)} s`
+      ? `Descanso: faltam ${Math.ceil(state.intervalRemaining / 1000)} s`
       : "",
   );
   text("active", `${time(state.active)} / ${time(state.limitMs)}`);
@@ -231,20 +238,20 @@ socket.on("snapshot", (incoming) => {
   text(
     "guidance",
     state.phase === "INTERVAL"
-      ? "Aguarde a pausa mínima. Depois, prepare a próxima atividade."
+      ? "Aguarde o fim do descanso. Depois, prepare a próxima atividade."
       : state.state === "READY" && !state.workflow.studentReady
-        ? "Deixe a janela do aluno visível e conectada para liberar o início."
+        ? "Deixe a janela do aluno visível e conectada para poder iniciar."
       : state.state === "PAUSED"
         ? "Confira a conexão e a tela do aluno antes de retomar."
-        : "Parâmetros experimentais. Movimento do mouse não mede atenção ou atividade cerebral.",
+        : "Os números mostram a trajetória desta atividade. A entrada é provisória e não mede atenção nem atividade cerebral.",
   );
   text(
     "set-info",
     state.set
-      ? `${state.set.id} · equivalência geométrica operacional. Não garante dificuldade humana equivalente.`
+      ? "Os labirintos A, B e C têm estrutura parecida, mas isso não garante que sejam igualmente difíceis para o aluno."
       : state.state === "IDLE"
-        ? "Parâmetros congelados após preparar. Sem sensores reais ou calibração."
-        : "Exploração: sementes livres; sem tendência comparativa automática.",
+        ? "Depois de conferir a sessão, as configurações ficam travadas. Esta demonstração não usa sensores reais."
+        : "Modo exploração: o código do labirinto é livre e não há comparação automática entre atividades.",
   );
   if (incoming.config) {
     const channel = document.getElementById("channel");
@@ -252,7 +259,7 @@ socket.on("snapshot", (incoming) => {
       channel.replaceChildren(
         ...Array.from(
           { length: state.config.channels },
-          (_, i) => new Option(`V${i + 1}`, String(i)),
+          (_, i) => new Option(`Canal ${i + 1}`, String(i)),
         ),
       );
     }
@@ -277,8 +284,8 @@ socket.on("snapshot", (incoming) => {
   text(
     "unsaved",
     state.unexported
-      ? "Resultados ainda não exportados. Podem ser perdidos ao reiniciar ou expirar a sessão."
-      : "Resultados exportados ou sessão ainda sem registros.",
+      ? "O resumo é salvo no histórico do aluno ao encerrar a sessão. Para guardar a cópia completa (caminho feito e detalhes), baixe o relatório."
+      : "Relatório já baixado, ou ainda não há registros nesta sessão.",
   );
   if (incoming.events) timeline.events(events);
   text(

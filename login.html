@@ -9,16 +9,33 @@
     <script src="/public/modules/login.js" type="module"></script>
   </head>
   <body class="login-page">
-    <main class="login-card">
-      <img src="/assets/attobrain-logo.svg" alt="Attobrain" class="login-logo" />
-      <h1>Área do profissional</h1>
-      <p>Entre para acompanhar seus alunos e as sessões do labirinto.</p>
-      <form id="login-form">
-        <label>E-mail<input name="email" type="email" autocomplete="username" required /></label>
-        <label>Senha<input name="senha" type="password" autocomplete="current-password" required /></label>
-        <button type="submit">Entrar</button>
-        <p id="login-erro" role="alert"></p>
-      </form>
+    <main class="login-layout">
+      <section class="login-brand" aria-label="Attobrain">
+        <img src="/assets/attobrain-logo.svg" alt="Attobrain" class="login-logo" width="248" height="49" />
+        <div class="login-message">
+          <h1>Explorando caminhos.<br />Observando movimentos.</h1>
+          <p>Demonstração acadêmica de navegação em labirinto<br class="desktop-break" /> com acompanhamento em duas telas.</p>
+        </div>
+        <img class="login-illustration" src="/assets/gaze-maze-vision.png" alt="Ilustração conceitual de uma trajetória visual atravessando um labirinto" width="1000" height="667" fetchpriority="high" />
+      </section>
+      <section class="login-panel" aria-label="Acesso à plataforma">
+        <div class="login-card">
+          <div class="login-body">
+            <h2>Entrar</h2>
+            <p class="login-intro">Acesse seu espaço no Attobrain</p>
+            <form id="login-form">
+              <label for="login-email">E-mail</label>
+              <input id="login-email" name="email" type="email" autocomplete="username" placeholder="nome@instituicao.com" required />
+              <label for="login-password">Senha</label>
+              <input id="login-password" name="senha" type="password" autocomplete="current-password" placeholder="••••••••••" required />
+              <button type="submit">Entrar</button>
+              <p id="login-erro" role="alert" aria-live="polite"></p>
+              <button class="login-recovery" type="button" data-login-help>Esqueci minha senha</button>
+              <p id="login-help" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </section>
     </main>
   </body>
 </html>

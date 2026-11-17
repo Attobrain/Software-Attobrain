@@ -43,6 +43,7 @@ npm run start:xampp
 
 Acesse `http://localhost:3000/login` e entre com o profissional de demonstração:
 
+- nome exibido: `Victor Gabriel Ferreira Theodoro`
 - e-mail: `profissional@attobrain.com`
 - senha: `attobrain123`
 
@@ -171,7 +172,7 @@ A impressão prioriza resumo, observações, comparação elegível, limitaçõe
 
 ## Privacidade e limites operacionais
 
-- Sessões e trajetórias são mantidas temporariamente na memória do servidor; não há banco de dados nem persistência após reinício.
+- Cadastros de alunos e resumos das sessões ficam no MySQL. Trajetórias, eventos e dados detalhados permanecem na memória enquanto a sessão está ativa e no JSON exportado; reiniciar o servidor elimina os dados detalhados que não tenham sido exportados.
 - São aceitas até quatro sessões simultâneas e até 30 minutos de execução total por sessão. Sessões sem conexão são removidas após 30 minutos.
 - A credencial profissional protege exportação e inspeção temporal. Credenciais não entram nos JSON exportados nem nos logs estruturados do servidor.
 - O servidor recebe do aluno a entrada do mouse e presença/visibilidade da tela. Não há câmera, rastreador ocular, sensor EEG real ou integração de hardware.

@@ -19,7 +19,7 @@ export function bindControls({
     const ending = document.createElement("dialog");
     ending.className = "termination-dialog";
     ending.setAttribute("aria-labelledby", "termination-title");
-    ending.innerHTML = '<form method="dialog"><h2 id="termination-title">Encerrar sessão?</h2><p>Os registros serão preservados. Uma sessão incompleta gera somente resultados parciais.</p><label>Motivo<select id="termination-reason"><option value="voluntary">Interrupção voluntária</option><option value="technical">Falha técnica</option></select></label><div class="controls"><button value="cancel" class="secondary">Continuar atividade</button><button type="button" class="danger" id="confirm-ending">Confirmar encerramento</button></div></form>';
+    ending.innerHTML = '<form method="dialog"><h2 id="termination-title">Encerrar sessão?</h2><p>Tudo o que já foi feito fica registrado. Se encerrar agora, o relatório terá apenas os resultados parciais.</p><label>Motivo<select id="termination-reason"><option value="voluntary">Decisão do profissional</option><option value="technical">Problema técnico</option></select></label><div class="controls"><button value="cancel" class="secondary">Continuar atividade</button><button type="button" class="danger" id="confirm-ending">Confirmar encerramento</button></div></form>';
     document.body.append(ending);
     let endingType = null;
     document.getElementById("confirm-ending").onclick = () => {
@@ -78,11 +78,11 @@ export function bindControls({
       try {
         await navigator.clipboard.writeText(studentUrl());
         message(
-          ["localhost", "127.0.0.1"].includes(location.hostname) ? "Link copiado. Na rede local, use o IP do servidor no lugar de localhost." : "Link copiado. Envie para o participante abrir no computador dele.",
+          ["localhost", "127.0.0.1"].includes(location.hostname) ? "Link copiado. Se o aluno estiver em outro computador, troque \"localhost\" pelo endereço deste computador na rede." : "Link copiado. Envie ao aluno para abrir no computador dele.",
         );
       } catch {
         prompt(
-          "Link temporário do aluno:",
+          "Link da tela do aluno (vale só para esta sessão):",
           studentUrl(),
         );
       }
@@ -90,7 +90,7 @@ export function bindControls({
     document.getElementById("new-session").onclick = () => {
       if (
         confirm(
-          "Os resultados são temporários. Exporte antes de criar outra sessão. Continuar?",
+          "A sessão atual sairá da tela. O resumo de uma sessão encerrada já fica no histórico do aluno; para guardar a cópia completa, baixe o relatório antes. Deseja continuar?",
         )
       ) {
         if (state()) state().unexported = false;
@@ -109,7 +109,7 @@ export function bindControls({
     document.getElementById("print").onclick = () => {
       let printedNotes=document.getElementById("printed-notes");
       if(!printedNotes){printedNotes=document.createElement("p");printedNotes.id="printed-notes";document.getElementById("notes").closest("label").after(printedNotes);}
-      printedNotes.textContent=document.getElementById("notes").value || "Nenhuma observação manual registrada.";
+      printedNotes.textContent=document.getElementById("notes").value || "Nenhuma observação registrada pelo profissional.";
       document.body.classList.toggle("include-technical", !!document.getElementById("print-technical")?.checked);
       const prior = [...document.querySelectorAll("#result-panel details")].map(el => [el, el.open]);
       if (document.body.classList.contains("include-technical")) {
@@ -123,7 +123,7 @@ export function bindControls({
     window.addEventListener("beforeunload", (event) => {
       if (state()?.unexported && state()?.runId) {
         event.preventDefault();
-        event.returnValue = "Resultados não exportados.";
+        event.returnValue = "Você ainda não baixou o relatório desta sessão. Deseja sair mesmo assim?";
       }
     });
     setInterval(() => {

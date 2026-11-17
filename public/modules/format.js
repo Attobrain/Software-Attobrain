@@ -29,4 +29,5 @@ export const labels = {
   COMPLETED: "Percurso concluído",
   TIMED_OUT: "Tempo da atividade encerrado",
   ABORTED: "Atividade encerrada",
+  NOT_PERFORMED: "Não realizada",
 };

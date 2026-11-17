@@ -14,6 +14,11 @@
 @keyframes connection-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
 .live-app .profile-facts { display:flex; flex-wrap:wrap; gap:14px 30px; border-block:1px solid var(--line); padding:18px 0; margin:20px 0; }
 .live-app .profile-facts strong { color:#5931b0; }
+.live-app .data-origin-map { display:flex; align-items:center; gap:24px; border-left:4px solid #087f73; background:linear-gradient(110deg,#fff 64%,#eef8f5); }
+.live-app .data-origin-map > img { display:block; flex:0 0 min(31%,250px); width:min(31%,250px); height:175px; object-fit:contain; }
+.live-app .data-origin-map h2 { margin:7px 0 12px; font-size:21px; }
+.live-app .data-origin-map ul { display:grid; gap:8px; margin:0; padding-left:20px; color:#526078; font-size:13px; line-height:1.55; }
+.live-app .data-origin-map li strong { color:#26334b; }
 .live-app .analysis-status,.live-app .dimension-status { display:inline-flex; border-radius:100px; padding:6px 12px; font-size:12px; font-weight:750; background:#eef1f7; color:#526078; white-space:nowrap; }
 .live-app .status-sufficient,.live-app .status-available { background:#e3f6f0; color:#087562; }
 .live-app .status-limited,.live-app .status-partial { background:#fff1d8; color:#80530d; }
@@ -34,7 +39,7 @@
 .live-app .episode-list { display:flex; flex-wrap:wrap; gap:9px; margin:16px 0; }
 .live-app .episode-list button { white-space:normal; text-align:left; }
 .live-app .empty-analysis { display:flex; gap:20px; align-items:center; }
-.live-app .empty-analysis img { object-fit:contain; width:140px; height:140px; }
+.live-app .empty-analysis img { object-fit:contain; flex:0 0 220px; width:220px; height:132px; }
 .live-app .historical-notice { border-left:3px solid #d69c35; padding:12px; background:#fff8eb; }
 .live-app #report-comparison canvas { width:100%; }
 .live-app #report-evidence .result-trajectory { display:block; width:min(100%,520px); height:auto; margin:18px auto; }
@@ -48,7 +53,10 @@
  .live-app .profile-identity { gap:12px; }
  .live-app .report-illustration { width:56px; height:56px; }
  .live-app .objective-profile,.live-app .observation-card { padding:20px; }
+ .live-app .data-origin-map { flex-direction:column; align-items:flex-start; gap:10px; padding:20px; }
+ .live-app .data-origin-map > img { align-self:center; flex-basis:auto; width:min(280px,90%); height:150px; }
  .live-app .empty-analysis { flex-direction:column; text-align:center; }
+ .live-app .empty-analysis img { flex:0 0 auto; width:min(240px,80%); height:auto; }
  .live-app .report-tabs button { padding:12px 15px; }
 }
 @media print {

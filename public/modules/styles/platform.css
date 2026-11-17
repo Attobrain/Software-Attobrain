@@ -26,6 +26,44 @@
 .live-app .home-number { color:#6941c6; background:#f2edfc; border-radius:12px; display:grid; place-items:center; width:44px; height:44px; font-weight:700; margin-bottom:24px; }
 .live-app .platform-notice { padding:24px; border:1px solid #ded6f2; border-radius:16px; background:#f1edfb; }
 .live-app .platform-notice p { margin:8px 0 0; color:#4d426b; max-width:85ch; }
+.live-app .overview-notice { display:flex; align-items:center; justify-content:space-between; gap:28px; min-height:210px; }
+.live-app .overview-notice-copy { min-width:0; max-width:760px; }
+.live-app .overview-notice > img { display:block; flex:0 0 min(32%,340px); width:min(32%,340px); height:220px; object-fit:contain; }
+.live-app .overview-notice-copy > strong { display:block; max-width:34ch; margin-top:10px; color:#241b3e; font-size:clamp(21px,2vw,28px); letter-spacing:-.025em; line-height:1.2; }
+.live-app .simulation-disclosure { margin-top:12px; color:#4d426b; font-size:12px; }
+.live-app .simulation-disclosure summary { width:fit-content; cursor:pointer; font-weight:650; }
+.live-app .simulation-disclosure p { margin:8px 0 0; font-size:12px; }
+.live-app .project-overview-link { display:inline-block; margin-top:14px; color:#5832a7; font-size:13px; font-weight:650; }
+.live-app .future-capabilities { margin:30px 0 36px; }
+.live-app .future-capabilities > .section-heading { align-items:flex-end; margin-bottom:16px; }
+.live-app .future-capability-grid, .live-app .future-layer-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.live-app .future-capability-card, .live-app .future-layer-card { min-width:0; padding:20px; border:1px solid #e4e7ef; border-radius:16px; background:linear-gradient(150deg,#fff 25%,#faf8ff); box-shadow:0 8px 26px rgb(41 35 71 / 4%); }
+.live-app .future-capability-art, .live-app .future-layer-art { display:grid; place-items:center; height:150px; margin-bottom:14px; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at 50% 62%,#ebe6fb 0,transparent 68%); }
+.live-app .future-capability-art img, .live-app .future-layer-art img { display:block; width:100%; height:100%; object-fit:contain; }
+.live-app .future-layer-status, .live-app .concept-badge { display:inline-flex; align-items:center; min-height:25px; padding:4px 9px; border-radius:999px; background:#f0ebfa; color:#5832a7; font-size:10px; font-weight:750; letter-spacing:.045em; }
+.live-app .future-capability-card h3, .live-app .future-layer-card h3 { margin:8px 0; color:#211a38; font-size:17px; }
+.live-app .future-capability-card p, .live-app .future-layer-card p, .live-app .future-layers-intro { margin:0; color:#526078; font-size:13px; line-height:1.6; }
+.live-app .future-layers-intro { max-width:80ch; margin:-8px 0 18px; }
+.live-app .future-layer-card { background:#fff; }
+.live-app .art-float { animation:future-art-float 7s ease-in-out infinite; }
+.live-app .art-delay-1 { animation-delay:-2.3s; }
+.live-app .art-delay-2 { animation-delay:-4.6s; }
+.live-app .project-profile { display:grid; gap:24px; }
+.live-app .project-section { padding:28px; }
+.live-app .project-concepts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.live-app .project-concept { min-width:0; padding:20px; border:1px solid #e4e7ef; border-radius:14px; background:#fafaff; }
+.live-app .project-concept .home-number { margin:0 0 16px; }
+.live-app .project-concept h3 { margin:0 0 10px; font-size:17px; }
+.live-app .project-concept p, .live-app .project-section > p, .live-app .project-references > p { color:#526078; line-height:1.65; }
+.live-app .project-boundaries { margin:0; padding-left:24px; color:#334155; line-height:1.75; }
+.live-app .project-boundaries li + li { margin-top:8px; }
+.live-app .project-team-list { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 14px; padding:0; list-style:none; }
+.live-app .project-team-list li { padding:10px 14px; border:1px solid #e4e7ef; border-radius:999px; background:#fafaff; color:#0f172a; font-size:14px; font-weight:650; }
+.live-app .project-team-note { margin:0; color:#526078; font-size:13px; }
+.live-app .project-references { padding:24px 28px; }
+.live-app .project-references > summary { cursor:pointer; font-weight:650; }
+.live-app .project-references ul { display:grid; gap:14px; padding-left:22px; }
+.live-app .project-references li span { display:block; margin-top:3px; color:#526078; font-size:12px; }
 .live-app .import-card p { color:#526078; }
 .live-app .student-picker .section-heading { margin-bottom:24px; }
 .live-app .student-search { display:block; max-width:440px; margin:24px 0; }
@@ -33,7 +71,13 @@
 .live-app .student-form { display:grid; max-width:720px; gap:20px; }
 .live-app .student-form label { display:grid; gap:8px; }
 .live-app .student-form p { margin:0; }
-.live-app .field-error { color:#a12338; }
+.live-app .field-error { color:#a12338; font-size:13px; }
+.live-app .field-error:not(:empty) { padding:12px 16px; border:1px solid #f4d9de; border-radius:10px; background:#fff5f5; }
+.live-app .empty-state { margin:0; padding:32px 16px; border:1px dashed #dce1eb; border-radius:12px; background:#f8f9fc; color:var(--muted); font-size:13px; text-align:center; }
+.live-app button.danger:hover:not(:disabled) { color:#9d1a2d; background:#ffecee; border-color:#eebcc4; }
+.live-app #student-selected { margin:16px 0 0; color:var(--muted); font-size:12px; }
+.live-app .student-form .controls { margin-top:4px; }
+.live-app .menu-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; overflow-wrap:anywhere; }
 .live-app #configuration-panel { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr); gap:24px; }
 .live-app #configuration-panel > button { justify-self:start; }
 .live-app #activity-setup .setup { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -41,6 +85,9 @@
 .live-app .configuration-preview { align-self:start; position:sticky; top:88px; }
 .live-app #preview-board { width:100%; max-width:440px; height:auto; display:block; margin:24px auto 0; border:1px solid #e4e7ef; border-radius:12px; }
 .live-app .configuration-preview p { color:#526078; margin:12px 0 0; font-size:13px; }
+.live-app .maze-key { display:flex; flex-wrap:wrap; gap:14px 22px; padding-top:14px; color:#526078; font-size:12px; }
+.live-app .maze-key span { display:flex; align-items:center; gap:7px; }
+.live-app .maze-key .dot { width:9px; height:9px; border-radius:50%; }
 .live-app .review-values { display:grid; grid-template-columns:minmax(110px,.7fr) minmax(0,1fr); gap:16px; margin:24px 0; }
 .live-app .review-values dt { color:#526078; }
 .live-app .review-values dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
@@ -87,6 +134,7 @@
 .live-app .termination-dialog h2, .live-app .termination-dialog label { margin-bottom:20px; display:block; }
 .live-app .termination-dialog select { margin-top:8px; }
 @keyframes flow-reveal { from { opacity:.3; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes future-art-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
 @media (max-width:1050px) {
   .live-app .guided-steps li { display:flex; flex-direction:column; gap:8px; text-align:center; font-size:11px; }
   .live-app .guided-steps li small { display:none; }
@@ -97,11 +145,21 @@
   .live-app .guided-steps { display:none; }
   .live-app .step-count { background:#f0ebfa; padding:14px; border-radius:10px; color:#5832a7; }
   .live-app .home-grid, .live-app .review-grid, .live-app .dimension-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
+  .live-app .future-capability-grid, .live-app .future-layer-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .live-app .future-capability-card, .live-app .future-layer-card { display:grid; grid-template-columns:92px minmax(0,1fr); align-items:center; gap:2px 14px; padding:14px; }
+  .live-app .future-capability-art, .live-app .future-layer-art { grid-row:1/4; width:92px; height:92px; margin:0; }
+  .live-app .future-capability-card h3, .live-app .future-layer-card h3 { margin:5px 0; }
+  .live-app .future-capability-card p, .live-app .future-layer-card p { grid-column:2; }
+  .live-app .future-capability-card .future-layer-status, .live-app .future-layer-card .future-layer-status { justify-self:start; }
+  .live-app .project-concepts { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .live-app .project-section, .live-app .project-references { padding:20px; }
   .live-app .flow-heading { display:block; }
   .live-app .flow-heading > a { margin-top:16px; }
   .live-app .student-picker .section-heading { flex-wrap:wrap; }
   .live-app #activity-setup .setup { grid-template-columns:minmax(0,1fr); }
   .live-app .home-grid article { padding:24px; }
+  .live-app .overview-notice { align-items:flex-start; flex-direction:column-reverse; gap:8px; }
+  .live-app .overview-notice > img { align-self:center; flex-basis:auto; width:min(300px,90%); height:175px; }
   .live-app .review-values { grid-template-columns:minmax(0,1fr); gap:8px; }
   .live-app .review-values dd { margin-bottom:12px; }
   .live-app .dimension-run p { grid-template-columns:minmax(0,1fr); }

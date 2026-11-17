@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS sessoes (
   FOREIGN KEY (profissional_id) REFERENCES profissionais(id)
 ) CHARACTER SET utf8mb4;
 
--- Profissional de demonstração: profissional@attobrain.com / attobrain123
+-- Conta de demonstração da equipe: profissional@attobrain.com / attobrain123
 INSERT INTO profissionais (nome, email, senha_hash) VALUES
-  ('Profissional Demonstração', 'profissional@attobrain.com', '$2b$10$5XDimOSotIlN.zEe7SB5dexPv6q2EKPA.PQVC3cYFxZQkUYOYB6mK');
+  ('Victor Gabriel Ferreira Theodoro', 'profissional@attobrain.com', '$2b$10$5XDimOSotIlN.zEe7SB5dexPv6q2EKPA.PQVC3cYFxZQkUYOYB6mK');
 
 -- Alunos fictícios, apenas para demonstrar o sistema
 INSERT INTO alunos (profissional_id, nome, data_nascimento, escola, turma, responsavel, observacoes) VALUES
