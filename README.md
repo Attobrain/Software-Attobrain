@@ -279,11 +279,9 @@ As fixtures são entradas automatizadas, não participantes reais. Os testes cob
 
 ## Documentação complementar
 
-- [Resultados v4: fórmulas, limites, elegibilidade e compatibilidade](docs/RESULTADOS-V4.md)
-- [Fluxo guiado, critérios e contratos](docs/FLUXO-GUIADO.md)
-- [Protocolo e fórmulas](docs/PROTOCOLO.md)
-- [Plano consolidado do MVP](docs/PLANO-MVP.md)
-- [Relatório de entrega e limites da validação](docs/ENTREGA-MVP.md)
-- [Descrição da simulação anterior](SIMULACAO.md) — documento histórico, não substitui as definições atuais de resultados v4.
+- [Fluxo guiado da sessão](docs/FLUXO-GUIADO.md)
+- [Protocolo, métricas e contratos](docs/PROTOCOLO.md)
+- [Modelo do banco de dados](docs/BANCO.md)
+- [Publicação e compartilhamento pela web](docs/HOSPEDAGEM-WEB.md)
 
 O MVP serve à demonstração acadêmica da experiência do labirinto e do processamento de dados simulados. A persistência atual cobre cadastros e resumos; guardar os dados detalhados após reinício, autenticação institucional, integração com sensor real, validação científica e qualquer aplicação clínica exigem etapas próprias de projeto e avaliação.
