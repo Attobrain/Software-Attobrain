@@ -232,11 +232,16 @@ function createApplication(options = {}) {
 }
 if (require.main === module) {
   (async () => {
-    try {
-      const situacao = await prepararBanco();
-      if (situacao === "criado") console.log("Banco attobrain criado com os dados de demonstração.");
-    } catch (erro) {
-      console.log(JSON.stringify({ level: "error", event: "preparar-banco-falhou", reason: erro.message }));
+    // O MySQL do XAMPP pode levar alguns segundos para aceitar conexões: tenta de novo antes de desistir.
+    for (let tentativa = 1; tentativa <= 15; tentativa++) {
+      try {
+        const situacao = await prepararBanco();
+        if (situacao === "criado") console.log("Banco attobrain criado com os dados de demonstração.");
+        break;
+      } catch (erro) {
+        console.log(JSON.stringify({ level: "error", event: "preparar-banco-falhou", tentativa, reason: erro.message || erro.code }));
+        if (tentativa < 15) await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
     }
     const app = createApplication({ logger: record => console.log(JSON.stringify(record)) });
     const port = Number(process.env.PORT) || 3000;

@@ -11,6 +11,10 @@ ATTOBRAIN - COMO ABRIR NA APRESENTACAO
 4. Para a tela do aluno, use o link da sessao na tela "Preparar atividade" (abra em outra janela).
 5. Depois do treino, o botao "Pular para resultados (demonstracao)" mostra o relatorio com dados teoricos.
 
+PLANO B: se o Attobrain.exe nao abrir (bloqueio do Windows, antivirus), de dois cliques em
+"Iniciar Attobrain (reserva).bat" na pasta Attobrain. Ele faz a mesma coisa e abre o navegador.
+Nao feche a janela preta durante a apresentacao.
+
 Se algo nao abrir:
 - Confira se o MySQL do XAMPP esta verde. O Attobrain.exe tambem tenta liga-lo sozinho.
 - Veja os arquivos dist\attobrain-launcher.log e dist\attobrain-server.log.
