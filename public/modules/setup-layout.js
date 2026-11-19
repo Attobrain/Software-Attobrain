@@ -6,11 +6,11 @@ export function setupLayout() {
  <label>Duração do treino (60–90 s)<input name="trainingSeconds" type="number" min="60" max="90" value="75" required></label>
  <label>Duração de cada atividade (180–240 s)<input name="activitySeconds" type="number" min="180" max="240" value="210" required></label>
  <label>Intervalo entre atividades (30–45 s)<input name="intervalSeconds" type="number" min="30" max="45" value="35" required></label>
- <details class="parameters"><summary>Sinais neurofisiológicos sintéticos (avançado)</summary><p class="panel-caption">O gerador demonstra o formato da visualização; não recebe dados de sensores.</p><div class="setup"><label>Tipo de simulação<select name="eegMode"><option value="independent">Independente da atividade (padrão)</option><option value="interactive">Reage à interação (didático)</option></select></label>
+ <details class="parameters" hidden><summary>Sinais neurofisiológicos sintéticos (avançado)</summary><div class="setup"><label>Tipo de simulação<select name="eegMode"><option value="independent">Independente da atividade (padrão)</option><option value="interactive">Reage à interação (didático)</option></select></label>
  <label>Canais simulados<select name="channels"><option value="8">8 canais</option><option value="4">4 canais</option><option value="1">1 canal</option></select></label>
  <label>Frequência do sinal<select name="sampleRate"><option value="250">250 Hz</option><option value="500">500 Hz</option></select></label>
  <label>Código da simulação<input name="eegSeed" type="number" min="0" max="4294967295" value="90210" required></label>
- </div></details><details class="parameters"><summary>Ajustes finos da interação (avançado)</summary><div class="setup">
+ </div></details><details class="parameters" hidden><summary>Ajustes finos da interação (avançado)</summary><div class="setup">
  <label>Velocidade do ponto de interação (largura/s)<input name="speed" type="number" min="0.1" max="0.4" step="0.01" value="0.25" required></label>
  <label>Raio do ponto de interação (largura)<input name="radius" type="number" min="0.005" max="0.015" step="0.001" value="0.01" required></label>
  <label>Espessura da parede (largura)<input name="wallWidth" type="number" min="0.002" max="0.008" step="0.001" value="0.005" required></label>

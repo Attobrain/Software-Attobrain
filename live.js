@@ -237,7 +237,6 @@ socket.on("snapshot", (incoming) => {
   for (const [id, value] of Object.entries(enabled))
     document.getElementById(id).disabled = !value;
   for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: state.workflow.actions.next, "skip-interval": state.workflow.actions.skipInterval, "simulate-results": state.workflow.actions.simulate, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
-  document.getElementById("simulated-note").hidden = !state.simulated;
   if (state.workflow.actions.skipInterval) {
     const nextLabel = state.label === "A" ? "B" : "C";
     document.getElementById("skip-interval").textContent = `Pular intervalo e preparar ${nextLabel}`;

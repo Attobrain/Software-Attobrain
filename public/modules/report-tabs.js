@@ -6,12 +6,13 @@ export function createReportTabs(technical, notes) {
     const button=document.createElement("button");button.id=`tab-${id}`;button.type="button";button.textContent=label;button.dataset.reportTab=id;button.setAttribute("role","tab");button.setAttribute("aria-controls",`report-${id}`);nav.append(button);
     const panel=document.createElement("section");panel.id=`report-${id}`;panel.className="report-tab-panel";panel.setAttribute("role","tabpanel");panel.setAttribute("aria-labelledby",button.id);panels[id]=panel;root.append(panel);
   }
+  nav.querySelector("#tab-technical").hidden=true; // Detalhes técnicos ficam fora do MVP.
   root.querySelector(".page-heading").after(nav);
   panels.summary.append(document.getElementById("interpretation"),notes);
   const comparisonCard=document.createElement("section");comparisonCard.className="card";comparisonCard.innerHTML="<h2>Comparação entre atividades</h2>";
   for(const id of ["report-description","comparison"]) comparisonCard.append(document.getElementById(id));const chartFold=document.createElement("details");chartFold.className="fold";chartFold.innerHTML="<summary>Ver em gráfico de barras</summary>";chartFold.append(document.getElementById("comparison-chart"));comparisonCard.append(chartFold);
   panels.comparison.append(comparisonCard);
-  const evidence=document.createElement("section");evidence.className="card";evidence.innerHTML="<h2>Percursos e momentos</h2><p class='tab-intro'>Escolha um momento para rever o percurso naquele instante.</p>";
+  const evidence=document.createElement("section");evidence.className="card";evidence.innerHTML="<h2>Percursos e momentos</h2>";
   evidence.append(document.getElementById("individual-results"));panels.evidence.append(evidence);
   panels.technical.insertAdjacentHTML("beforeend",'<p class="tab-intro">Para conferir como cada número foi calculado. Não é necessário para ler o resultado.</p>');panels.technical.append(document.getElementById("result-technical"));
   const eegWindow=document.createElement("details");eegWindow.className="card";eegWindow.innerHTML="<summary>Sinal simulado no momento escolhido</summary>";
@@ -24,7 +25,7 @@ export function createReportTabs(technical, notes) {
     if(focus) document.getElementById(`tab-${id}`).focus();
   }
   nav.onclick=e=>{const b=e.target.closest("[data-report-tab]");if(b)activate(b.dataset.reportTab);};
-  nav.onkeydown=e=>{const ids=Object.keys(panels),i=ids.indexOf(active);if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();activate(e.key==="Home"?ids[0]:e.key==="End"?ids.at(-1):ids[(i+(e.key==="ArrowRight"?1:3))%4],true);}};
+  nav.onkeydown=e=>{const ids=Object.keys(panels).filter(k=>k!=="technical"),i=ids.indexOf(active);if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();activate(e.key==="Home"?ids[0]:e.key==="End"?ids.at(-1):ids[(i+(e.key==="ArrowRight"?1:ids.length-1))%ids.length],true);}};
   activate("summary");
   return {activate,show(result){
     const timeline=document.getElementById("timeline");

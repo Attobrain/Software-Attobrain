@@ -47,7 +47,7 @@ export function metricDetails(m) {
         `<article class="third-card"><h5>Parte ${i + 1}${t.eligible ? "" : ' <span class="chip chip-limited">poucos dados</span>'}</h5><dl><div><dt>Encostes por minuto</dt><dd>${cell(t.contactsPerMinute, 1)}</dd></div><div><dt>Velocidade</dt><dd>${cell(t.speed, 3)}</dd></div><div><dt>Irregularidade</dt><dd>${cell(t.cv, 2)}</dd></div><div><dt>Pouco movimento</dt><dd>${cell(sec(t.lowMs), 0, " s")}</dd></div><div><dt>Pontos do caminho</dt><dd>${esc(t.checkpoints ?? "—")}</dd></div></dl>${t.eligible ? "" : '<small>Menos de 5 s registrados.</small>'}</article>`,
     )
     .join("");
-  return `<div class="stat-groups">${groups}</div>${legacy}<section class="stat-group"><h4>Evolução ao longo da atividade</h4><p class="group-note">A atividade dividida em três partes iguais.</p><div class="third-grid">${thirds || '<p class="empty-note">Sem dados.</p>'}</div></section><p class="panel-caption">Um traço (—) indica dados insuficientes. Os parâmetros são experimentais, e o caminho só é avaliado se o aluno chegar ao fim. Versão do cálculo: ${esc(m.formulaVersion)}.</p>`;
+  return `<div class="stat-groups">${groups}</div>${legacy}<section class="stat-group"><h4>Evolução ao longo da atividade</h4><p class="group-note">A atividade dividida em três partes iguais.</p><div class="third-grid">${thirds || '<p class="empty-note">Sem dados.</p>'}</div></section>`;
 }
 
 function definition(key, m) {
@@ -78,7 +78,7 @@ export function renderReport(report) {
         ["Movimento", ["speed", "cv"]],
       ].map(([title, keys]) => `<section class="cmp-section"><h3>${title}</h3><div class="cmp-grid">${keys.map((key) => metricCard(key, runs, "h4")).join("")}</div></section>`).join("")
     : `<p class="empty-note">Estes valores usam o cálculo de uma versão antiga e não podem ser comparados aqui. Tempo ativo: ${runs.map((r) => `${esc(r.label)} ${esc(time(r.result?.activeMs))}`).join(" · ")}.</p>`;
-  document.getElementById("comparison").innerHTML = `<p class="notice">${notice}</p>${status}${sections}<p class="panel-caption">Ter um valor para cada atividade não significa que elas possam ser comparadas. O caminho direto não diz se houve encostes na parede nem se o movimento foi preciso.</p>`;
+  document.getElementById("comparison").innerHTML = `${report.analysis?.quality.comparable ? "" : `<p class="notice">${notice}</p>`}${sections}`;
 
   document.getElementById("rules").innerHTML = report.rules.length
     ? report.rules.map((r) => `<details><summary>${esc(r.text)}</summary><p>Regra ${esc(r.ruleId)} v${r.version} · ${esc(r.metrics.join(", "))}</p><pre>${esc(JSON.stringify({ values: r.values, runIds: r.runIds }, null, 2))}</pre></details>`).join("")
