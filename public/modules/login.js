@@ -23,7 +23,7 @@ form.addEventListener("submit", async (evento) => {
     });
     const corpo = await resposta.json().catch(() => ({}));
     if (!resposta.ok) throw Error(corpo.erro || "Não foi possível entrar.");
-    location.href = "/profissional";
+    location.href = "/profissional#overview";
   } catch (e) {
     erro.textContent = e instanceof TypeError ? "Sem conexão com o servidor. Tente novamente." : e.message;
     botao.disabled = false;

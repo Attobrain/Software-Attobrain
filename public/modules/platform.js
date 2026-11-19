@@ -32,7 +32,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     }
     if (["prepare", "maze", "monitor", "activity-setup", "monitoring"].includes(value)) return "session";
     if (value === "result") return "results";
-    return value || (location.pathname === "/profissional" ? "session" : "overview");
+    return value || "overview";
   }
   function navigate(value) {
     if (location.hash === `#${value}`) { renderKey = ""; show(); }
