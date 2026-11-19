@@ -33,6 +33,7 @@ export function bindControls({
       "abort",
       "next",
       "skip-interval",
+      "simulate-results",
       "repeat-training",
       "end-session",
     ])

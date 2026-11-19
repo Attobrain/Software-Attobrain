@@ -19,6 +19,7 @@ function sessionView(session, role, full = false) {
         professional: !!session.professional,
       },
       closed: session.closed,
+      simulated: session.simulated,
     };
   if (full)
     Object.assign(base, { maze: r?.maze, walls: r?.walls, seed: r?.seed });

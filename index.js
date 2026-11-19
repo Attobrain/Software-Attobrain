@@ -11,6 +11,7 @@ const { protocolDescription } = require("./src/types/protocol");
 const express = require("express");
 const session = require("express-session");
 const { criarPool } = require("./src/db");
+const { prepararBanco } = require("./src/banco-inicial");
 const { rotasAuth } = require("./src/routes/auth");
 const { rotasAlunos } = require("./src/routes/alunos");
 const { resumoSessao } = require("./src/services/resumo-sessao");
@@ -230,12 +231,20 @@ function createApplication(options = {}) {
   };
 }
 if (require.main === module) {
-  const app = createApplication({ logger: record => console.log(JSON.stringify(record)) });
-  const port = Number(process.env.PORT) || 3000;
-  app.server.listen(port, () =>
-    console.log(`Attobrain: http://localhost:${port}/profissional`),
-  );
-  for (const signal of ["SIGINT", "SIGTERM"])
-    process.on(signal, () => app.close().then(() => process.exit(0)));
+  (async () => {
+    try {
+      const situacao = await prepararBanco();
+      if (situacao === "criado") console.log("Banco attobrain criado com os dados de demonstração.");
+    } catch (erro) {
+      console.log(JSON.stringify({ level: "error", event: "preparar-banco-falhou", reason: erro.message }));
+    }
+    const app = createApplication({ logger: record => console.log(JSON.stringify(record)) });
+    const port = Number(process.env.PORT) || 3000;
+    app.server.listen(port, () =>
+      console.log(`Attobrain: http://localhost:${port}/profissional`),
+    );
+    for (const signal of ["SIGINT", "SIGTERM"])
+      process.on(signal, () => app.close().then(() => process.exit(0)));
+  })();
 }
 module.exports = { createApplication };

@@ -9,7 +9,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   let historyOf = null, historyRows = [], editId = null, creating = false, selected = null, returnToFlow = false, renderKey = "", previewTimer, pending = false, imported = null, previews = [];
   const technical = document.createElement("details");
   technical.id = "technical-panel"; technical.className = "card technical-panel";
-  technical.innerHTML = '<summary>Detalhes da sessão (avançado)</summary>';
+  technical.innerHTML = '<summary>Detalhes da sessão</summary>';
   for (const id of ["timeline", "eeg-panel", "diagnostics"]) technical.append(document.getElementById(id));
   session.append(technical);
   const reportActions = document.createElement("div"); reportActions.className = "controls report-actions";
@@ -21,7 +21,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   notes.append(document.getElementById("notes").closest("label"), document.getElementById("unsaved"));
   document.getElementById("result-panel").insertBefore(notes, document.getElementById("result-technical"));
   const reportTabs = createReportTabs(technical, notes);
-  document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Ver detalhes da sessão (avançado)</button>');
+  document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Detalhes da sessão</button>');
   document.getElementById("result-new").onclick = newSession;
   const heading = (title, description) => `<section class="page-heading"><div><h1 tabindex="-1">${title}</h1><p>${description}</p></div></section>`;
   function route() {
@@ -41,7 +41,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   function studentsPage(selection = false) {
     const list = readStudents();
     const continuation = selection ? `<button id="confirm-participant" data-flow="participant" ${list.some(v => String(v.id) === String(selected)) ? "" : "disabled"}>Confirmar aluno e continuar →</button>` : "";
-    return `${selection ? "" : heading("Alunos", "Cadastre e consulte os alunos acompanhados por você.")}<section class="card student-picker"><div class="section-heading"><h2>${selection ? "Quem vai participar?" : "Alunos cadastrados"}</h2><button class="secondary" data-student="create">Cadastrar aluno</button></div><label class="student-search">Buscar aluno<input id="student-search" type="search" placeholder="Nome ou escola" autocomplete="off"></label><div id="student-rows">${studentList(list, selection, selected)}</div><p id="student-selected" role="status">${selection ? "Selecione e confirme o aluno para continuar." : `${list.length} aluno(s) cadastrado(s).`}</p>${continuation}</section>`;
+    return `${selection ? "" : heading("Alunos", "Cadastre e consulte os alunos acompanhados por você.")}<section class="card student-picker"><div class="section-heading"><h2>${selection ? "Quem vai participar?" : "Alunos cadastrados"}</h2><button class="secondary" data-student="create">Cadastrar aluno</button></div><label class="student-search">Buscar aluno<input id="student-search" type="search" placeholder="Nome ou escola" autocomplete="off"></label><div id="student-rows">${studentList(list, selection, selected)}</div><p id="student-selected" role="status">${selection ? "Selecione um aluno para continuar." : `${list.length} aluno(s) cadastrado(s).`}</p>${continuation}</section>`;
   }
   function steps(s) {
     const list = s.config.mode === "single" ? [["participant", "Aluno"], ["configuration", "Configuração"], ["review", "Revisão"], ["activity", "Atividade"]] : [["participant", "Aluno"], ["configuration", "Configuração"], ["review", "Revisão"], ["training", "Treino"], ["A", "A"], ["B", "B"], ["C", "C"]];
@@ -68,7 +68,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       selector.replaceChildren(...previews.map(p => new Option(p.label, p.label)));
       if (previews.some(p => p.label === previous)) selector.value = previous;
       drawBoard(document.getElementById("preview-board"), previews.find(p => p.label === selector.value));
-      document.getElementById("preview-description").textContent = `${reply.preview[0].label} · labirinto de ${config.level} × ${config.level}. ${config.mode === "protocol" ? "As atividades A, B e C usam labirintos fixos, para poderem ser comparadas." : `Exploração · código do labirinto ${config.seed}; sem comparação entre atividades.`} Nada foi registrado ainda.`;
+      document.getElementById("preview-description").textContent = `${reply.preview[0].label} · labirinto ${config.level} × ${config.level}. ${config.mode === "protocol" ? "A, B e C usam labirintos fixos." : `Código ${config.seed}, sem comparação entre atividades.`} Prévia: nada foi registrado.`;
     });
   }
   function show() {
@@ -83,7 +83,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     });
     if (current === "results" && !s && !imported && !credentials()?.id) {
       page.hidden = false; session.hidden = true;
-      page.innerHTML = `${heading("Abrir resultado", "Veja um relatório que você baixou antes.")}<section class="card"><p>Escolha o arquivo do relatório salvo no seu computador. Ele é só para consulta e não altera o histórico do aluno. Se a página for recarregada, abra o arquivo de novo.</p><button data-flow="import">Abrir relatório salvo</button></section>`;
+      page.innerHTML = `${heading("Abrir resultado", "Veja um relatório que você baixou antes.")}<section class="card"><p>Escolha o arquivo salvo no seu computador. É só para consulta e não altera o histórico do aluno. Se recarregar a página, abra o arquivo de novo.</p><button data-flow="import">Abrir relatório salvo</button></section>`;
       return;
     }
     if (platformPage) {
@@ -95,7 +95,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       return;
     }
     if (!s && !imported) {
-      document.getElementById("wizard-panel").innerHTML = '<section class="card"><h2>Conectando a sessão</h2><p>Aguardando confirmação do servidor…</p><button class="secondary" data-flow="reconnect">Tentar conectar novamente</button><button class="secondary" data-flow="new">Criar outra sessão</button></section>';
+      document.getElementById("wizard-panel").innerHTML = '<section class="card"><h2>Conectando a sessão</h2><p>Aguardando o servidor…</p><button class="secondary" data-flow="reconnect">Tentar conectar novamente</button><button class="secondary" data-flow="new">Criar outra sessão</button></section>';
       connect().catch(error => message(error.message));
       return;
     }
@@ -126,7 +126,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       renderKey = key;
       const titles = { participant: "Selecionar aluno", configuration: "Configurar o labirinto", review: "Tudo pronto para começar?", training: "Treinamento", activity: "Exploração", A: "Atividade A", B: "Atividade B", C: "Atividade C" };
       document.getElementById("flow-title").textContent = titles[w.step] ?? "Sessão";
-      document.getElementById("flow-description").textContent = execution ? `${s.participant?.name ?? "Participante demonstrativo"} · A análise completa aparece ao final da sessão.` : "Uma etapa de cada vez, com os dados necessários para começar.";
+      document.getElementById("flow-description").textContent = execution ? `${s.participant?.name ?? "Participante demonstrativo"} · O resumo aparece ao final da sessão.` : "Uma etapa por vez.";
       const wizard = document.getElementById("wizard-panel");
       if (w.step === "participant") wizard.innerHTML = studentsPage(true);
       if (config) {
@@ -135,11 +135,11 @@ export function createPlatform({ connect, command, state, credentials, socket, m
         document.getElementById("activity-setup").open = true;
         updatePreview();
       }
-      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">CONFERÊNCIA</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Tipo de sessão</dt><dd>${s.config.mode === "protocol" ? "Treino + atividades A, B e C" : "Uma atividade livre (exploração)"}</dd><dt>Tamanho do labirinto</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Interação demonstrativa</dt><dd>Controle visual do percurso</dd><dt>Tempo máximo</dt><dd>Treino ${s.config.trainingSeconds} s · cada atividade ${s.config.activitySeconds} s</dd><dt>Intervalo entre atividades</dt><dd>${s.config.intervalSeconds} s</dd></dl><details class="parameters"><summary>Sobre esta demonstração</summary><p>O controle ocular é apresentado visualmente, e sua integração com sensores ainda está em desenvolvimento. O sinal neurofisiológico é gerado por software e não entra na análise.</p><p>Sinal sintético: ${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente da atividade" : "reação didática à interação"}.</p></details><p>A análise descreve os registros do percurso e não atribui atenção nem atividade cerebral.</p><button class="secondary" data-flow="back" data-step="configuration">Voltar às configurações</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><img class="connection-illustration" src="/assets/screens-guide.png" alt="" width="180" height="130"><p>Abra a janela do aluno e deixe-a visível ao lado deste painel. Alternar abas pode ocultar a atividade e provocar uma pausa.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Se a janela não abrir, permita o popup deste site e tente novamente.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
+      if (w.step === "review") wizard.innerHTML = `<section class="review-grid"><article class="card"><span class="eyebrow">CONFERÊNCIA</span><h2>${esc(s.participant?.name)}</h2><dl class="review-values"><dt>Tipo de sessão</dt><dd>${s.config.mode === "protocol" ? "Treino + atividades A, B e C" : "Uma atividade livre (exploração)"}</dd><dt>Tamanho do labirinto</dt><dd>${s.config.level} × ${s.config.level}</dd><dt>Interação demonstrativa</dt><dd>Controle visual do percurso</dd><dt>Tempo máximo</dt><dd>Treino ${s.config.trainingSeconds} s · cada atividade ${s.config.activitySeconds} s</dd><dt>Intervalo entre atividades</dt><dd>${s.config.intervalSeconds} s</dd></dl><details class="parameters"><summary>Sobre esta demonstração</summary><p>O controle ocular é só visual; a integração com sensores está em desenvolvimento. O sinal neurofisiológico é gerado por software e não entra na análise.</p><p>Sinal sintético: ${s.config.channels} canais · ${s.config.sampleRate} Hz · ${s.config.eegMode === "independent" ? "independente da atividade" : "reação didática à interação"}.</p></details><p>A análise descreve os registros do percurso e não atribui atenção nem atividade cerebral.</p><button class="secondary" data-flow="back" data-step="configuration">Voltar às configurações</button></article><article class="card connection-review"><span class="eyebrow">DUAS JANELAS NO MESMO COMPUTADOR</span><h2>Conecte a tela do aluno</h2><img class="connection-illustration" src="/assets/screens-guide.png" alt="" width="180" height="130"><p>Deixe a janela do aluno visível ao lado deste painel. Trocar de aba pode pausar a atividade.</p><button class="secondary" data-flow="open">Abrir tela do aluno</button><p id="review-connection" role="status"></p><p id="popup-help">Janela bloqueada? Permita pop-ups deste site.</p><button data-flow="begin" id="begin-session">Iniciar sessão →</button></article></section>`;
       if (result) {
         document.getElementById("interpretation").innerHTML = interpretationView(s.report, s.participant, s.id, false, s.endReason);
         reportTabs.activate("summary");
-        document.getElementById("result-technical").open = false;
+        document.getElementById("result-technical").open = true;
       }
       document.getElementById("flow-title").focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: "instant" });
@@ -164,7 +164,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   document.getElementById("preview-phase").onchange = event => {
     const chosen = previews.find(p => p.label === event.target.value);
     drawBoard(document.getElementById("preview-board"), chosen);
-    if (chosen) document.getElementById("preview-description").textContent = `${chosen.label} · labirinto de ${chosen.maze.cols} × ${chosen.maze.rows} · código ${chosen.seed}. Prévia: nada foi registrado. Formato parecido não garante a mesma dificuldade para o aluno.`;
+    if (chosen) document.getElementById("preview-description").textContent = `${chosen.label} · labirinto ${chosen.maze.cols} × ${chosen.maze.rows} · código ${chosen.seed}. Prévia: nada foi registrado.`;
   };
   document.addEventListener("input", event => {
     if (event.target.id !== "student-search") return;
@@ -243,7 +243,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
       showImported(data);
       imported = data; document.getElementById("interpretation").innerHTML = html;
       reportTabs.activate("summary");
-      document.getElementById("result-technical").open = false;
+      document.getElementById("result-technical").open = true;
       navigate("results");
       window.scrollTo({ top: 0, behavior: "instant" });
     } catch (error) { message(`Não foi possível abrir este relatório. Confirme que o arquivo foi baixado pelo Attobrain (botão "Baixar relatório da sessão") e tente de novo. Detalhe: ${error.message}`); }

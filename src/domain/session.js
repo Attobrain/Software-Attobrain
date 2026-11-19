@@ -8,6 +8,7 @@ const { analyze } = require("./metrics");
 const { consolidate } = require("./report");
 const { freshWalls } = require("./contacts");
 const { draftCommand, studentReady } = require("./workflow");
+const { simularResultados } = require("../services/resultados-simulados");
 const TERMINAL = new Set(["COMPLETED", "TIMED_OUT", "ABORTED"]);
 const STEP = 1000 / 60;
 class Session {
@@ -46,6 +47,7 @@ class Session {
     this.intervalUntil = 0;
     this.engineDelay = 0;
     this.closed = false;
+    this.simulated = false;
     this.lastMetrics = 0;
     this.eeg = { blocks: [], spectra: [], artifacts: [], gaps: [], samples: 0 };
   }
@@ -261,6 +263,12 @@ class Session {
         this.newRun(nextLabel);
         break;
       }
+      case "simulate-results":
+        // Atalho de demonstração: só depois do treino concluído, sem atividades A, B e C reais.
+        if (this.closed || r?.label !== "Treinamento" || !TERMINAL.has(r.state) || this.runs.length !== 1)
+          throw Error("A simulação só está disponível logo após o treinamento.");
+        simularResultados(this);
+        break;
       case "repeat-training":
         if (
           this.closed ||

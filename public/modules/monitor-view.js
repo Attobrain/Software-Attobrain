@@ -31,16 +31,17 @@ export function updateMonitor(state, events) {
     hasSamples = m?.activeMs > 0;
   document.getElementById("trend-empty").hidden = hasSamples;
   document.getElementById("activity-trend").hidden = !hasSamples;
-  text("speed", hasSamples ? number(m.speed, 3) : "—");
-  text("low", hasSamples ? `${number(m.lowMs / 1000, 1)} s` : "—");
-  text("distance", hasSamples ? `${number(m.distance, 2)} larguras do quadro` : "—");
-  text("variability", hasSamples ? `${number(m.velocity.cv, 2)} (quanto maior, mais irregular)` : "—");
+  const shown = (value, digits) => (Number.isFinite(value) ? number(value, digits) : "—");
+  text("speed", hasSamples ? shown(m.speed, 3) : "—");
+  text("low", hasSamples && Number.isFinite(m.lowMs) ? `${number(m.lowMs / 1000, 1)} s` : "—");
+  text("distance", hasSamples && Number.isFinite(m.distance) ? `${number(m.distance, 1)} larguras` : "—");
+  text("variability", hasSamples ? shown(m.velocity.cv, 2) : "—");
   text("backtracks", hasSamples ? String(m.backtracks.length) : "—");
   text(
     "trend-caption",
     hasSamples
-      ? `A linha mostra o ritmo registrado do percurso; os marcadores indicam contatos com as paredes. Foram ${m.collisionEpisodeCount ?? "—"} contatos nesta atividade.`
-      : "O gráfico usa somente registros da atividade atual.",
+      ? `Linha: ritmo do percurso. Pontos: encostes na parede (${m.collisionEpisodeCount ?? "—"} até agora).`
+      : "Usa só registros da atividade atual.",
   );
   const phase = state.closed
     ? "Sessão encerrada"
@@ -92,7 +93,7 @@ export function updateBands(spectral) {
   if (!spectral?.valid) {
     container.classList.add("is-empty");
     container.textContent =
-      "Os valores aparecem após oito segundos contínuos de sinal.";
+      "Os valores aparecem após 8 s contínuos de sinal.";
     return;
   }
   container.classList.remove("is-empty");

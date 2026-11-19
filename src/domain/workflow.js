@@ -40,6 +40,7 @@ function workflow(s) {
       pause: r?.state === "RUNNING", abort: !!r && !ended && !s.closed,
       next: ended && !s.closed && s.time >= s.intervalUntil,
       skipInterval: ended && ["A", "B"].includes(r?.label) && s.phase === "INTERVAL" && !s.closed && s.time < s.intervalUntil,
+      simulate: ended && r.label === "Treinamento" && s.runs.length === 1 && !s.closed,
       repeat: ended && r.label === "Treinamento" && !s.closed && s.runs.filter(v => v.label === "Treinamento").length < 7,
       end: !s.closed,
     },

@@ -2,18 +2,18 @@ export function createReportTabs(technical, notes) {
   const root=document.getElementById("result-panel"), session=document.getElementById("session-view");
   const nav=document.createElement("nav"); nav.className="report-tabs"; nav.setAttribute("role","tablist");nav.setAttribute("aria-label","Seções do relatório");
   const panels={};
-  for(const [id,label] of [["summary","Resumo"],["comparison","Comparação"],["evidence","Percursos e registros"],["technical","Detalhes técnicos (avançado)"]]) {
+  for(const [id,label] of [["summary","Resumo"],["comparison","Comparação"],["evidence","Percursos"],["technical","Detalhes técnicos"]]) {
     const button=document.createElement("button");button.id=`tab-${id}`;button.type="button";button.textContent=label;button.dataset.reportTab=id;button.setAttribute("role","tab");button.setAttribute("aria-controls",`report-${id}`);nav.append(button);
     const panel=document.createElement("section");panel.id=`report-${id}`;panel.className="report-tab-panel";panel.setAttribute("role","tabpanel");panel.setAttribute("aria-labelledby",button.id);panels[id]=panel;root.append(panel);
   }
   root.querySelector(".page-heading").after(nav);
   panels.summary.append(document.getElementById("interpretation"),notes);
   const comparisonCard=document.createElement("section");comparisonCard.className="card";comparisonCard.innerHTML="<h2>Comparação entre atividades</h2>";
-  for(const id of ["report-description","comparison","comparison-chart"]) comparisonCard.append(document.getElementById(id));
+  for(const id of ["report-description","comparison"]) comparisonCard.append(document.getElementById(id));const chartFold=document.createElement("details");chartFold.className="fold";chartFold.innerHTML="<summary>Ver em gráfico de barras</summary>";chartFold.append(document.getElementById("comparison-chart"));comparisonCard.append(chartFold);
   panels.comparison.append(comparisonCard);
-  const evidence=document.createElement("section");evidence.className="card";evidence.innerHTML="<h2>Caminho feito e momentos em que encostou na parede</h2><p>Os marcadores agrupam os encostes por região do labirinto. Escolha um momento para rever o percurso naquele instante.</p>";
+  const evidence=document.createElement("section");evidence.className="card";evidence.innerHTML="<h2>Percursos e momentos</h2><p class='tab-intro'>Escolha um momento para rever o percurso naquele instante.</p>";
   evidence.append(document.getElementById("individual-results"));panels.evidence.append(evidence);
-  panels.technical.append(document.getElementById("result-technical"));
+  panels.technical.insertAdjacentHTML("beforeend",'<p class="tab-intro">Para conferir como cada número foi calculado. Não é necessário para ler o resultado.</p>');panels.technical.append(document.getElementById("result-technical"));
   const eegWindow=document.createElement("details");eegWindow.className="card";eegWindow.innerHTML="<summary>Sinal simulado no momento escolhido</summary>";
   eegWindow.append(document.getElementById("replay-eeg").parentElement);document.getElementById("diagnostics").append(eegWindow);
   document.getElementById("rules").hidden=true;

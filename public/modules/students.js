@@ -57,7 +57,7 @@ export function studentList(lista, selection = false, selected = null) {
   return `<div class="table-wrap"><table class="result-table"><thead><tr><th>Aluno</th><th>Escola</th><th>Turma</th><th>Ações</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
 }
 
-const motivos = { voluntary: "Encerrada pelo profissional", technical: "Problema técnico", "session-limit": "Limite de tempo" };
+const motivos = { completed: "Concluída", "timed-out": "Tempo esgotado", voluntary: "Encerrada pelo profissional", technical: "Problema técnico", "session-limit": "Limite de tempo" };
 export function historyPage(aluno, sessoes) {
   const linhas = sessoes.map(s => `<tr><td>${esc(new Date(s.realizadaEm).toLocaleString("pt-BR"))}</td><td>${esc(s.nivel ?? "-")}</td><td>${esc(String(s.fasesConcluidas))}</td><td>${esc(String(s.tempoAtivoSeg))} s</td><td>${esc(String(s.totalColisoes))}</td><td>${esc(motivos[s.motivoFim] ?? "-")}</td></tr>`).join("");
   const tabela = sessoes.length

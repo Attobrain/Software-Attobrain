@@ -162,7 +162,7 @@ function showImported(data) {
   document.getElementById("notes").disabled = true;
   document.getElementById("export").disabled = true;
   document.getElementById("inspect").disabled = true;
-  text("unsaved", "Você está vendo um relatório salvo. Ele serve só para consulta e não pode ser alterado.");
+  text("unsaved", "Relatório salvo: só para consulta, não pode ser alterado.");
 }
 function restoreLive() {
   results = []; eegChannels = []; spectrumData = null; lastReport = "";
@@ -228,6 +228,7 @@ socket.on("snapshot", (incoming) => {
       abort: ["READY", "RUNNING", "PAUSED"].includes(state.state),
       next: state.workflow.actions.next,
       "skip-interval": state.workflow.actions.skipInterval,
+      "simulate-results": state.workflow.actions.simulate,
       "repeat-training":
         state.workflow.actions.repeat,
       "end-session": !state.closed,
@@ -235,7 +236,8 @@ socket.on("snapshot", (incoming) => {
     };
   for (const [id, value] of Object.entries(enabled))
     document.getElementById(id).disabled = !value;
-  for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: state.workflow.actions.next, "skip-interval": state.workflow.actions.skipInterval, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
+  for (const [id, visible] of Object.entries({ start: state.state === "READY", pause: state.state === "RUNNING", resume: state.state === "PAUSED", next: state.workflow.actions.next, "skip-interval": state.workflow.actions.skipInterval, "simulate-results": state.workflow.actions.simulate, "repeat-training": terminal && state.label === "Treinamento" && !state.closed })) document.getElementById(id).hidden = !visible;
+  document.getElementById("simulated-note").hidden = !state.simulated;
   if (state.workflow.actions.skipInterval) {
     const nextLabel = state.label === "A" ? "B" : "C";
     document.getElementById("skip-interval").textContent = `Pular intervalo e preparar ${nextLabel}`;
@@ -246,20 +248,20 @@ socket.on("snapshot", (incoming) => {
   text(
     "guidance",
     state.phase === "INTERVAL"
-      ? "Atalho de apresentação: antecipe o preparo da próxima atividade. O intervalo reduzido ficará registrado."
+      ? "Atalho de apresentação: o intervalo reduzido fica registrado."
       : state.state === "READY" && !state.workflow.studentReady
-        ? "Deixe a janela do aluno visível e conectada para poder iniciar."
+        ? "Deixe a janela do aluno visível para iniciar."
       : state.state === "PAUSED"
-        ? "Confira a conexão e a tela do aluno antes de retomar."
-        : "Os números descrevem a trajetória desta atividade. Não representam uma medição de atenção ou atividade cerebral.",
+        ? "Confira a tela do aluno antes de retomar."
+        : "Os números descrevem o percurso. Não medem atenção nem atividade cerebral.",
   );
   text(
     "set-info",
     state.set
-      ? "Os labirintos A, B e C têm estrutura parecida, mas isso não garante que sejam igualmente difíceis para o aluno."
+      ? "A, B e C têm estrutura parecida, mas isso não garante a mesma dificuldade para o aluno."
       : state.state === "IDLE"
-        ? "Depois de conferir a sessão, as configurações ficam travadas. Esta demonstração não usa sensores reais."
-        : "Modo exploração: o código do labirinto é livre e não há comparação automática entre atividades.",
+        ? "Após a revisão, as configurações ficam travadas. Demonstração sem sensores reais."
+        : "Exploração: código livre, sem comparação entre atividades.",
   );
   if (incoming.config) {
     const channel = document.getElementById("channel");
@@ -292,8 +294,8 @@ socket.on("snapshot", (incoming) => {
   text(
     "unsaved",
     state.unexported
-      ? "O resumo é salvo no histórico do aluno ao encerrar a sessão. Para guardar a cópia completa (caminho feito e detalhes), baixe o relatório."
-      : "Relatório já baixado, ou ainda não há registros nesta sessão.",
+      ? "O resumo vai para o histórico ao encerrar a sessão. Para a cópia completa, baixe o relatório."
+      : "Relatório já baixado, ou sem registros ainda.",
   );
   if (incoming.events) timeline.events(events);
   text(
@@ -341,7 +343,7 @@ function render(now) {
   requestAnimationFrame(render);
   if (!state && !platform?.isImported()) return;
   if (document.getElementById("board")?.checkVisibility()) drawBoard(document.getElementById("board"), state, {
-    trail: !student && document.getElementById("trail").checked ? trail : [],
+    trail: student ? trail.slice(-400) : document.getElementById("trail").checked ? trail : [],
     metrics: student ? null : state.metrics,
     studentTheme: student,
   });

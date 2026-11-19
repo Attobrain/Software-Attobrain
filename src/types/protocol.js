@@ -1,7 +1,7 @@
 "use strict";
 const { DEFAULTS } = require("../validators/config");
 const COMMANDS = Object.freeze({
-  "select-participant": ["participant"], configure: ["config"], back: ["step"], begin: [], start: [], pause: [], resume: [], abort: ["reason"], next: [], "skip-interval": [], "repeat-training": [], "end-session": ["reason"], notes: ["value"], reanalyze: [],
+  "select-participant": ["participant"], configure: ["config"], back: ["step"], begin: [], start: [], pause: [], resume: [], abort: ["reason"], next: [], "skip-interval": [], "simulate-results": [],"repeat-training": [], "end-session": ["reason"], notes: ["value"], reanalyze: [],
 });
 function protocolDescription() {
   return {

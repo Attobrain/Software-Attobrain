@@ -1,0 +1,20 @@
+ATTOBRAIN - COMO ABRIR NA APRESENTACAO
+
+1. Abra o painel do XAMPP e clique em Start no MySQL (so o MySQL e preciso).
+2. Abra a pasta Attobrain, entre em "dist" e de dois cliques em Attobrain.exe.
+   - Na primeira vez em um computador novo, o sistema cria sozinho o banco "attobrain"
+     com os 5 alunos e o historico de demonstracao. Nao precisa importar nada.
+   - Se o Windows avisar "protegeu seu computador", clique em "Mais informacoes" e "Executar assim mesmo".
+3. O navegador abre na tela de login:
+     e-mail: profissional@attobrain.com
+     senha:  attobrain123
+4. Para a tela do aluno, use o link da sessao na tela "Preparar atividade" (abra em outra janela).
+5. Depois do treino, o botao "Pular para resultados (demonstracao)" mostra o relatorio com dados teoricos.
+
+Se algo nao abrir:
+- Confira se o MySQL do XAMPP esta verde. O Attobrain.exe tambem tenta liga-lo sozinho.
+- Veja os arquivos dist\attobrain-launcher.log e dist\attobrain-server.log.
+- Porta 3000 ocupada: feche o outro programa ou mude PORT no arquivo .env.
+- Usuario do MySQL diferente de root sem senha: ajuste DB_USER e DB_PASSWORD no arquivo .env.
+
+Para zerar os dados de demonstracao: apague o banco "attobrain" no phpMyAdmin e abra o .exe de novo.

@@ -64,14 +64,16 @@ internal static class AttobrainLauncher
             int dbPort = ReadPort(env, "DB_PORT", 3306);
             if (!EnsureMySql(dbHost, dbPort)) return;
 
+            // A saída do servidor vai direto para um arquivo. Se ela passasse por um pipe deste
+            // lançador, o servidor travaria ou cairia assim que o lançador fechasse (tela do aluno
+            // sem conexão), pois o Node não consegue mais escrever no pipe.
+            string serverLog = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "attobrain-server.log");
             ProcessStartInfo start = new ProcessStartInfo();
-            start.FileName = node;
-            start.Arguments = "--env-file=.env index.js";
+            start.FileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
+            start.Arguments = "/d /c \"\"" + node + "\" --env-file=.env index.js >> \"" + serverLog + "\" 2>&1\"";
             start.WorkingDirectory = root;
             start.UseShellExecute = false;
             start.CreateNoWindow = true;
-            start.RedirectStandardOutput = true;
-            start.RedirectStandardError = true;
 
             Process server = Process.Start(start);
             if (server == null)
@@ -79,16 +81,12 @@ internal static class AttobrainLauncher
                 ShowError("O servidor do Attobrain não pôde ser iniciado.");
                 return;
             }
-            server.OutputDataReceived += OnServerOutput;
-            server.ErrorDataReceived += OnServerOutput;
-            server.BeginOutputReadLine();
-            server.BeginErrorReadLine();
 
             if (!WaitForServer(appPort, server, 25000))
             {
                 string details = server.HasExited ? " O servidor encerrou durante a inicialização." : " O servidor ainda não respondeu.";
                 WriteLog(details);
-                ShowError("Não foi possível iniciar o Attobrain." + details + Environment.NewLine + "Consulte " + logPath + " para ver o motivo.");
+                ShowError("Não foi possível iniciar o Attobrain." + details + Environment.NewLine + "Consulte " + serverLog + " para ver o motivo.");
                 return;
             }
 
@@ -291,11 +289,6 @@ internal static class AttobrainLauncher
     private static void OpenBrowser(string url)
     {
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-    }
-
-    private static void OnServerOutput(object sender, DataReceivedEventArgs args)
-    {
-        if (args.Data != null) WriteLog(args.Data);
     }
 
     private static void WriteLog(string value)

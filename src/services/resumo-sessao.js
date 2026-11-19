@@ -16,7 +16,7 @@ function resumoSessao(session) {
     tempoAtivoSeg: Math.round(tempoMs / 1000),
     totalColisoes: colisoes,
     motivoFim: session.endReason ?? null,
-    observacoes: session.notes ? String(session.notes).slice(0, 4000) : null,
+    observacoes: [session.simulated ? "[Resultados simulados para demonstração]" : "", session.notes ?? ""].filter(Boolean).join(" ").slice(0, 4000) || null,
   };
 }
 module.exports = { resumoSessao };

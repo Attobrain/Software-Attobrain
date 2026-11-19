@@ -58,7 +58,7 @@ export function comparison(canvas, analysis) {
     c.fillStyle="#526078"; c.font="16px sans-serif"; c.fillText("Comparação gráfica indisponível: consulte critérios e registros individuais.",20,45);return;
   }
   const evaluations=analysis.features.filter(f=>["A","B","C"].includes(f.label));
-  const metrics = [["contacts","Episódios"],["contactDensity","Episódios / referência"],["efficiency","Eficiência da rota (%)"]];
+  const metrics = [["contacts","Encostes na parede"],["contactDensity","Encostes por distância"],["efficiency","Caminho direto (%)"]];
   metrics.forEach(([key, label], group) => {
     const values = evaluations.map(r=>r.state==="COMPLETED" && r.metrics[key]?.eligibility==="eligible" ? r.metrics[key].value:null),
       max = Math.max(...values.filter(Number.isFinite), 1e-9),

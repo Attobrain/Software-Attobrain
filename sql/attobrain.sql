@@ -44,6 +44,8 @@ ON DUPLICATE KEY UPDATE nome = 'Profissional de teste';
 
 -- Alunos fictícios, apenas para demonstrar o sistema
 INSERT INTO alunos (profissional_id, nome, data_nascimento, escola, turma, responsavel, observacoes) VALUES
-  (1, 'Aluno Exemplo 1', '2015-03-10', 'Escola Modelo', '4º ano A', 'Responsável Exemplo', 'Cadastro fictício de demonstração.'),
-  (1, 'Aluno Exemplo 2', '2014-08-22', 'Escola Modelo', '5º ano B', 'Responsável Exemplo', 'Cadastro fictício de demonstração.'),
-  (1, 'Aluno Exemplo 3', '2016-01-05', 'Escola Modelo', '3º ano A', 'Responsável Exemplo', 'Cadastro fictício de demonstração.');
+  (1, 'Victor Gabriel Ferreira Theodoro', '2015-03-10', 'EE Antônio Fernandes Professor', '4º ano A', 'Responsável (fictício)', 'Cadastro fictício, apenas para demonstração.'),
+  (1, 'Laura Julia Mathias Amaral', '2014-08-22', 'EE Alay José Correa Vereador', '5º ano B', 'Responsável (fictício)', 'Cadastro fictício, apenas para demonstração.'),
+  (1, 'Millie Zanon Morelli Santos', '2016-01-05', 'EE Antônio Fernandes Professor', '3º ano A', 'Responsável (fictício)', 'Cadastro fictício, apenas para demonstração.'),
+  (1, 'Mario Armando Takahashi Martins Dias', '2013-11-18', 'EE Alay José Correa Vereador', '6º ano A', 'Responsável (fictício)', 'Cadastro fictício, apenas para demonstração.'),
+  (1, 'Luiz Henrique Severo Cubas', '2015-06-30', 'EE Antônio Fernandes Professor', '4º ano B', 'Responsável (fictício)', 'Cadastro fictício, apenas para demonstração.');
