@@ -21,7 +21,6 @@ export function createPlatform({ connect, command, state, credentials, socket, m
   notes.append(document.getElementById("notes").closest("label"), document.getElementById("unsaved"));
   document.getElementById("result-panel").insertBefore(notes, document.getElementById("result-technical"));
   const reportTabs = createReportTabs(technical, notes);
-  document.getElementById("execution-panel").insertAdjacentHTML("beforeend", '<button class="secondary" data-flow="technical">Detalhes da sessão</button>');
   document.getElementById("result-new").onclick = newSession;
   const heading = (title, description) => `<section class="page-heading"><div><h1 tabindex="-1">${title}</h1><p>${description}</p></div></section>`;
   function route() {
@@ -119,7 +118,7 @@ export function createPlatform({ connect, command, state, credentials, socket, m
     document.querySelector(".flow-heading").hidden = result;
     document.getElementById("flow-steps").hidden = result;
     document.getElementById("wizard-panel").hidden = config || execution || result;
-    technical.hidden = !execution;
+    technical.hidden = true; // Detalhes técnicos ficam fora do MVP.
     steps(s);
     const key = `${w.step}:${w.controlRevision}`;
     if (key !== renderKey) {
