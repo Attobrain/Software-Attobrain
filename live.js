@@ -1,7 +1,7 @@
 import { createStudentEffects } from "./public/modules/student-effects.js";
 import { createPlatform } from "./public/modules/platform.js";
 import { professionalLayout } from "./public/modules/layout.js";
-import { text, number, time, labels, sourceLabel } from "./public/modules/format.js";
+import { text, time, labels, sourceLabel } from "./public/modules/format.js";
 import { drawBoard } from "./public/modules/board.js";
 import {
   waveform,
@@ -195,7 +195,7 @@ socket.on("snapshot", (incoming) => {
     return;
   }
   platform?.update(previous);
-  updateMonitor(state, events);
+  updateMonitor(state, events, trail);
   if (platform?.isImported()) return;
   if (!previous && state.state !== "IDLE")
     document.getElementById("activity-setup").open = false;
@@ -211,13 +211,6 @@ socket.on("snapshot", (incoming) => {
   );
   text("active", `${time(state.active)} / ${time(state.limitMs)}`);
   text("progress", `${state.metrics?.progress ?? 0}%`);
-  text("contacts", state.metrics?.collisionEpisodeCount ?? "—");
-  text(
-    "recovery",
-    state.metrics?.recovery.median != null
-      ? `${number(state.metrics.recovery.median / 1000)} s`
-      : "—",
-  );
   document.getElementById("progress-bar").value = state.metrics?.progress ?? 0;
   document.getElementById("empty").hidden = !!state.maze;
   const terminal = ["COMPLETED", "TIMED_OUT", "ABORTED"].includes(state.state),
@@ -252,7 +245,7 @@ socket.on("snapshot", (incoming) => {
         ? "Deixe a janela do aluno visível para iniciar."
       : state.state === "PAUSED"
         ? "Confira a tela do aluno antes de retomar."
-        : "Os números descrevem o percurso. Não medem atenção nem atividade cerebral.",
+        : "Distração: o aluno encosta na parede ou fica parado.",
   );
   text(
     "set-info",
@@ -278,6 +271,7 @@ socket.on("snapshot", (incoming) => {
   if (incoming.metrics)
     document.getElementById("live-details").innerHTML = metricDetails(
       state.metrics,
+      "game",
     );
   const reportKey = JSON.stringify(state.report);
   if (reportKey !== lastReport) {

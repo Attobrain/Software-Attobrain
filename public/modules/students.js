@@ -59,9 +59,9 @@ export function studentList(lista, selection = false, selected = null) {
 
 const motivos = { completed: "Concluída", "timed-out": "Tempo esgotado", voluntary: "Encerrada pelo profissional", technical: "Problema técnico", "session-limit": "Limite de tempo" };
 export function historyPage(aluno, sessoes) {
-  const linhas = sessoes.map(s => `<tr><td>${esc(new Date(s.realizadaEm).toLocaleString("pt-BR"))}</td><td>${esc(s.nivel ?? "-")}</td><td>${esc(String(s.fasesConcluidas))}</td><td>${esc(String(s.tempoAtivoSeg))} s</td><td>${esc(String(s.totalColisoes))}</td><td>${esc(motivos[s.motivoFim] ?? "-")}</td></tr>`).join("");
+  const linhas = sessoes.map(s => `<tr><td>${esc(new Date(s.realizadaEm).toLocaleString("pt-BR"))}</td><td>${esc(s.nivel ?? "-")}</td><td>${esc(String(s.fasesConcluidas))}</td><td>${esc(String(s.tempoAtivoSeg))} s</td><td>${esc(String(s.totalColisoes ?? "-"))}</td><td>${esc(motivos[s.motivoFim] ?? "-")}</td></tr>`).join("");
   const tabela = sessoes.length
-    ? `<div class="table-wrap"><table class="result-table"><thead><tr><th>Data</th><th>Nível</th><th>Fases concluídas</th><th>Tempo ativo</th><th>Colisões</th><th>Encerramento</th></tr></thead><tbody>${linhas}</tbody></table></div>`
+    ? `<div class="table-wrap"><table class="result-table"><thead><tr><th>Data</th><th>Nível</th><th>Fases concluídas</th><th>Tempo ativo</th><th>Distrações</th><th>Encerramento</th></tr></thead><tbody>${linhas}</tbody></table></div>`
     : '<p class="empty-state" role="status">Este aluno ainda não tem sessões registradas.</p>';
   return `<section class="card"><div class="section-heading"><h2>Histórico de ${esc(aluno?.nome ?? "aluno")}</h2><button class="secondary" data-student="cancel">Voltar</button></div>${tabela}</section>`;
 }

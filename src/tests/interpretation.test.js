@@ -74,7 +74,7 @@ test("v4 valida referências, mantém notas, aceita histórico sem reinterpreta�
 test("frontend explica insuficiência e protege texto; gráfico não desenha valores rejeitados",async()=>{
  const {interpretationView,metricValue}=await import("../../public/modules/interpretation-view.js");const {comparison}=await import("../../public/modules/charts.js");
  const report=consolidate([run("A"),run("B"),run("C")],cfg,setFor(7).id);
- const html=interpretationView(report,{name:"<script>"},"demo");assert(html.includes("&lt;script&gt;"));assert(html.includes("Perfil de desempenho observado"));assert(html.includes("Por que o sistema diz isso?"));assert.equal(metricValue(report.analysis.features[0].metrics.cv),"Dados insuficientes");
+ const html=interpretationView(report,{name:"<script>"},"demo");assert(html.includes("&lt;script&gt;"));assert(html.includes("Distrações em cada atividade"));assert(html.includes("Momentos de maior distração"));assert(html.includes("Dados da atividade"));assert.equal(metricValue(report.analysis.features[0].metrics.cv),"Dados insuficientes");
  const bars=[],context={clearRect(){},fillText(){},fillRect(...args){bars.push(args);}};
  comparison({width:1000,height:220,getContext:()=>context},report.analysis);assert.equal(bars.length,9);
  report.analysis.features.forEach(f=>f.metrics.contacts.eligibility="insufficient");bars.length=0;comparison({width:1000,height:220,getContext:()=>context},report.analysis);assert.equal(bars.length,6);

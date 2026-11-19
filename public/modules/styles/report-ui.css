@@ -171,6 +171,44 @@
 .live-app .detail-content .stat-groups { margin-top: 4px; }
 .live-app .metric-tile .metric-hint { font-size: 11px; }
 
+/* Resumo orientado à distração */
+.live-app .distraction-summary { display: grid; gap: 18px; }
+.live-app .distraction-summary > .section-heading { margin-bottom: 0; }
+.live-app .distraction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.live-app .distraction-card .kpi-big strong { font-size: 48px; }
+.live-app .distraction-card .kpi-big span { font-size: 16px; }
+.live-app .distraction-stats { display: grid; margin: 0; }
+.live-app .distraction-stats div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 0; border-top: 1px solid var(--ui-line); font-size: 13px; }
+.live-app .distraction-stats dt { color: #3f4c63; }
+.live-app .distraction-stats dd { margin: 0; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.live-app .distraction-stats small { display: block; color: var(--ui-muted); font-size: 11px; font-weight: 500; }
+.live-app .evolution { display: grid; gap: 10px; }
+.live-app .evolution-lead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0; font-size: 16px; line-height: 1.5; color: var(--ui-ink); }
+.live-app .evolution-list { border-top: 0; }
+.live-app .evo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 8px 0 4px; padding: 0; list-style: none; }
+.live-app .evo-list li { padding: 14px; border: 1px solid var(--ui-line); border-radius: 12px; background: var(--ui-soft); }
+.live-app .evo-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.live-app .evo-values { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 4px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.live-app .evo-text { margin: 0; color: var(--ui-muted); font-size: 13px; line-height: 1.5; }
+.live-app .moment-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.live-app .moment-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--ui-line); }
+.live-app .moment-list li:first-child { border-top: 0; }
+.live-app .moment-run { display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 10px; background: var(--ui-violet-pale); color: var(--ui-violet-ink); font-size: 13px; font-weight: 800; }
+.live-app .moment-list strong { display: block; font-size: 14px; }
+.live-app .moment-list li > div > span { color: var(--ui-muted); font-size: 12px; }
+.live-app .moment-link { min-height: 44px; padding: 8px 14px; font-size: 13px; }
+.live-app .game-data { padding: 20px 24px; }
+.live-app .game-data > summary, .live-app .observation-evidence > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; list-style: none; font-weight: 700; color: #26334b; }
+.live-app .game-data > summary::-webkit-details-marker, .live-app .observation-evidence > summary::-webkit-details-marker { display: none; }
+.live-app .game-data > summary::after, .live-app .observation-evidence > summary::after { content: "+"; flex-shrink: 0; font-size: 20px; line-height: 1; color: var(--ui-violet); }
+.live-app .game-data[open] > summary::after, .live-app .observation-evidence[open] > summary::after { content: "−"; }
+.live-app .game-data > summary:focus-visible, .live-app .observation-evidence > summary:focus-visible { outline: 3px solid #b7a0ee; outline-offset: 2px; border-radius: 8px; }
+.live-app .game-data .kpi-grid { margin-top: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.live-app .game-data .dimension-grid { margin-top: 16px; }
+.live-app .cmp-game { margin-top: 24px; }
+.live-app .cmp-game .cmp-grid { padding: 8px 0 4px; }
+.live-app .observation-evidence { padding: 20px 24px; }
+
 @media (max-width: 1100px) {
   .live-app .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -182,9 +220,14 @@
   .live-app .guide-fold { padding: 4px 16px; }
   .live-app .guide-fold > .attention-guide { margin: 4px -16px 0; }
   .live-app .obs { gap: 12px; }
+  .live-app .moment-list li { grid-template-columns: auto minmax(0, 1fr); }
+  .live-app .moment-link { grid-column: 1 / -1; }
+  .live-app .game-data, .live-app .observation-evidence { padding: 16px; }
   .live-app #result-technical, .live-app .professional-notes { padding: 16px; }
 }
 @media print {
   .live-app .cmp-card, .live-app .stat-group, .live-app .run-card { break-inside: avoid; box-shadow: none; }
   .live-app .guide-fold { display: none; }
+  .live-app .moment-link { display: none; }
+  .live-app .distraction-card, .live-app .evo-list li, .live-app .moment-list li { break-inside: avoid; }
 }

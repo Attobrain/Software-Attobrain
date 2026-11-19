@@ -1,21 +1,22 @@
 // Peças de apresentação do relatório: só formatam números já calculados.
 // Nada aqui recalcula métricas, regras ou critérios do motor de análise.
 import { escape as esc } from "./format.js";
+import { words } from "./distraction.js";
 
 export const friendly = {
-  contacts: "Encostes na parede",
-  wallContacts: "Registros por parede",
-  collisionEvents: "Registros de colisão",
-  duration: "Tempo ativo",
-  efficiency: "Caminho direto",
+  contacts: words.distractions,
+  wallContacts: "Toques na parede",
+  collisionEvents: "Registros de contato",
+  duration: words.activeTime,
+  efficiency: words.directPath,
   excess: "Distância a mais",
-  backtracks: "Voltas para trás",
-  speed: "Velocidade média",
-  cv: "Irregularidade do ritmo",
-  low: "Pouco movimento",
-  contactsPerMinute: "Encostes por minuto",
-  recovery: "Tempo para retomar",
-  contactDensity: "Encostes por distância",
+  backtracks: words.returns,
+  speed: words.speed,
+  cv: words.rhythm,
+  low: words.stopTime,
+  contactsPerMinute: words.perMinute,
+  recovery: words.recovery,
+  contactDensity: words.perStretch,
 };
 export const statusNames = { eligible: "Disponível", limited: "Limitado", insufficient: "Dados insuficientes", unavailable: "Indisponível" };
 export const metricLabel = (key, m) => friendly[key] ?? m?.name ?? key ?? "Medida";
@@ -44,7 +45,7 @@ function direction(values) {
   const valid = values.filter(Number.isFinite);
   if (valid.length < 2) return null;
   const first = valid[0], last = valid.at(-1), top = Math.max(Math.abs(first), Math.abs(last));
-  if (top === 0 || Math.abs(last - first) <= top * 0.1) return { sign: "same", text: "Parecido" };
+  if (top === 0 || Math.abs(last - first) <= top * 0.1) return { sign: "same", text: "Estável" };
   return last > first ? { sign: "up", text: "Aumentou" } : { sign: "down", text: "Diminuiu" };
 }
 const arrows = { up: "↑", down: "↓", same: "→" };
@@ -74,16 +75,16 @@ export function runsOf(report) {
   }));
 }
 export const specs = {
-  duration: { title: "Tempo ativo", hint: "Tempo em atividade, sem as pausas", format: (v) => seconds(v) },
-  contacts: { title: "Encostes na parede", hint: "Vezes em que o caminho encostou na parede", format: (v) => fmt(v, 0) },
-  contactsPerMinute: { title: "Encostes por minuto", hint: "Ritmo dos encostes ao longo da atividade", format: (v) => fmt(v, 1) },
-  contactDensity: { title: "Encostes por distância", hint: "Encostes a cada 10 larguras de corredor", format: (v) => fmt(v, 1) },
-  efficiency: { title: "Caminho direto", hint: "Quanto o caminho foi direto até a chegada. Não mede a precisão do movimento.", format: (v) => fmt(v, 0, "%") },
-  backtracks: { title: "Voltas para trás", hint: "Trechos em que o aluno voltou pelo mesmo caminho", format: (v) => fmt(v, 0) },
-  speed: { title: "Velocidade média", hint: "Larguras do quadro por segundo", format: (v) => fmt(v, 3) },
-  cv: { title: "Irregularidade do ritmo", hint: "Quanto maior, mais irregular o ritmo", format: (v) => fmt(v, 2) },
-  recovery: { title: "Tempo para retomar", hint: "Tempo típico para voltar a andar após encostar", format: (v) => fmt(v, 1, " s") },
-  low: { title: "Pouco movimento", hint: "Segundos quase parado", format: (v) => fmt(v, 0, " s") },
+  duration: { title: words.activeTime, hint: "Tempo em atividade, sem as pausas", format: (v) => seconds(v) },
+  contacts: { title: words.distractions, hint: "Vezes em que o aluno encostou na parede", format: (v) => fmt(v, 0) },
+  contactsPerMinute: { title: words.perMinute, hint: "Frequência das distrações ao longo da atividade", format: (v) => fmt(v, 1) },
+  contactDensity: { title: words.perStretch, hint: "Distrações a cada 10 larguras de corredor", format: (v) => fmt(v, 1) },
+  efficiency: { title: words.directPath, hint: "Quanto o caminho foi direto até a chegada", format: (v) => fmt(v, 0, "%") },
+  backtracks: { title: words.returns, hint: "Trechos em que o aluno perdeu o caminho e voltou", format: (v) => fmt(v, 0) },
+  speed: { title: words.speed, hint: "Larguras do quadro por segundo", format: (v) => fmt(v, 3) },
+  cv: { title: words.rhythm, hint: "Quanto maior, mais o ritmo oscilou", format: (v) => fmt(v, 2) },
+  recovery: { title: words.recovery, hint: "Tempo típico para voltar a andar após encostar", format: (v) => fmt(v, 1, " s") },
+  low: { title: words.stopTime, hint: "Soma dos segundos parado", format: (v) => fmt(v, 0, " s") },
 };
 export function metricCard(key, runs, tag) {
   const spec = specs[key];

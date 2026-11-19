@@ -1,4 +1,5 @@
 import { text, number, time, escape } from "./format.js";
+import { summarize, liveStatus, timelineHtml, recentItems, plural } from "./distraction.js";
 export const eventNames = {
   configured: "Sessão configurada",
   "draft-updated": "Configuração ajustada",
@@ -15,7 +16,7 @@ export const eventNames = {
   "engine-gap": "Falha técnica momentânea",
   "session-limit": "Limite da sessão atingido",
 };
-export function updateMonitor(state, events) {
+export function updateMonitor(state, events, trail = []) {
   text(
     "movement-state",
     state.state === "RUNNING"
@@ -28,20 +29,50 @@ export function updateMonitor(state, events) {
   );
   document.getElementById("movement-status").dataset.state = state.state;
   const m = state.metrics,
-    hasSamples = m?.activeMs > 0;
+    hasSamples = m?.activeMs > 0,
+    s = hasSamples ? summarize(m) : null;
   document.getElementById("trend-empty").hidden = hasSamples;
   document.getElementById("activity-trend").hidden = !hasSamples;
+  document.getElementById("distraction-empty").hidden = hasSamples;
+  const chart = document.getElementById("distraction-chart");
+  chart.hidden = !hasSamples;
   const shown = (value, digits) => (Number.isFinite(value) ? number(value, digits) : "—");
+  const seconds = (value) => `${Math.round(value)} s`;
+  // Indicadores de distração
+  text("contacts", s ? (s.distractions ?? "—") : "—");
+  text("low", s ? String(s.stops) : "—");
+  text("low-hint", `Parado por ${state.config?.lowSeconds ?? 2} s ou mais`);
+  text("recovery", s && s.recovery !== null ? `${number(s.recovery, 1)} s` : "—");
+  text("recovery-hint", s && s.recoveries ? `Mediana de ${s.recoveries} retomada(s)` : "Depois de cada distração");
+  text("backtracks", s ? String(s.returns) : "—");
+  text("variability", s ? shown(m.velocity?.cv, 2) : "—");
+  text("low-total", s ? seconds(s.stopSeconds) : "—");
+  const status = liveStatus(state, trail);
+  text("attention-state", status.title);
+  text("attention-state-hint", status.detail);
+  document.getElementById("state-tile").dataset.tone = status.tone;
+  // Linha do tempo: só redesenha quando algo muda (a cada segundo ou a cada novo registro)
+  if (hasSamples) {
+    const key = `${m.collisionEpisodeCount}:${(m.low ?? []).length}:${Math.floor(m.activeMs / 1000)}:${state.limitMs}`;
+    if (chart.dataset.key !== key) {
+      chart.dataset.key = key;
+      chart.innerHTML = timelineHtml(m, m.activeMs, state.limitMs);
+      chart.setAttribute("aria-label", `Linha do tempo: ${plural(s.distractions ?? 0, "distração", "distrações")} e ${plural(s.stops, "momento parado", "momentos parado")} até agora`);
+    }
+  }
+  text(
+    "distraction-caption",
+    hasSamples
+      ? `${plural(s.distractions ?? 0, "distração", "distrações")} · ${plural(s.stops, "momento parado", "momentos parado")} (${seconds(s.stopSeconds)}) até agora.`
+      : "",
+  );
+  document.getElementById("distraction-caption").hidden = !hasSamples;
+  // Dados da atividade (contexto do jogo)
   text("speed", hasSamples ? shown(m.speed, 3) : "—");
-  text("low", hasSamples && Number.isFinite(m.lowMs) ? `${number(m.lowMs / 1000, 1)} s` : "—");
   text("distance", hasSamples && Number.isFinite(m.distance) ? `${number(m.distance, 1)} larguras` : "—");
-  text("variability", hasSamples ? shown(m.velocity.cv, 2) : "—");
-  text("backtracks", hasSamples ? String(m.backtracks.length) : "—");
   text(
     "trend-caption",
-    hasSamples
-      ? `Linha: ritmo do percurso. Pontos: encostes na parede (${m.collisionEpisodeCount ?? "—"} até agora).`
-      : "Usa só registros da atividade atual.",
+    hasSamples ? "Velocidade do percurso. Pontos: distrações." : "Usa só registros da atividade atual.",
   );
   const phase = state.closed
     ? "Sessão encerrada"
@@ -70,18 +101,18 @@ export function updateMonitor(state, events) {
     else element.removeAttribute("aria-current");
   }
   const list = document.getElementById("recent-events"),
-    recent = events.slice(-5).reverse(),
-    signature = recent.map((e) => e.seq).join(",");
+    recent = recentItems(events, m, state.runId),
+    signature = recent.map((e) => e.key).join(",");
   if (list.dataset.signature !== signature) {
     list.dataset.signature = signature;
     list.innerHTML = recent.length
       ? recent
           .map(
             (e) =>
-              `<li><span class="event-marker" aria-hidden="true"></span><div><strong>${escape(eventNames[e.type] ?? "Acontecimento da sessão")}</strong><span>${escape(e.type === "pause" ? ({ manual: "Pausa solicitada", disconnected: "Conexão interrompida", "student-hidden": "Tela do aluno oculta" }[e.data?.reason] ?? "Pausa automática") : e.runId === state.runId ? state.label : "Sessão")}</span></div><time>${time(e.sessionTime)}</time></li>`,
+              `<li><span class="event-marker" aria-hidden="true"></span><div><strong>${escape(e.title)}</strong>${e.detail ? `<span>${escape(e.detail)}</span>` : ""}</div><time>${time(e.time)}</time></li>`,
           )
           .join("")
-      : '<li class="event-empty">Os acontecimentos aparecerão durante a sessão.</li>';
+      : '<li class="event-empty">As distrações aparecerão aqui durante a atividade.</li>';
   }
 }
 let bandSignature = "";

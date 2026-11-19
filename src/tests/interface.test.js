@@ -39,7 +39,12 @@ test("dashboard prioriza dados, preserva controles e mantém IDs únicos", async
   ])
     assert(ids.includes(id), id);
   assert(html.indexOf('id="metrics"') < html.indexOf('id="board"'));
-  assert(html.indexOf('id="activity-trend"') < html.indexOf('id="board"'));
+  assert(html.indexOf('id="distraction-chart"') < html.indexOf('id="board"'));
+  // Os dados do jogo ficam num bloco recolhido, depois dos indicadores de distração.
+  assert(html.indexOf('id="activity-data"') > html.indexOf('id="distraction-chart"'));
+  assert(/<details[^>]*id="activity-data"/.test(html) && !/<details[^>]*id="activity-data"[^>]*open/.test(html));
+  for (const id of ["attention-state", "contacts", "low", "recovery", "active", "progress", "speed", "distance", "backtracks", "variability", "recent-events", "activity-trend", "trend-empty", "progress-bar", "live-details"])
+    assert(ids.includes(id), id);
   assert(
     html.includes(
       "EEG SINTÉTICO — não representa a atividade cerebral do participante.",

@@ -1,6 +1,8 @@
 import { text, number } from "./format.js";
 import { bindTimeline } from "./timeline.js";
 import { mouseInput } from "./input.js";
+import { printReport } from "./print-report.js";
+import { readStudents } from "./students.js";
 export function bindControls({
   student,
   socket,
@@ -108,18 +110,12 @@ export function bindControls({
       try { await command("notes", { value: document.getElementById("notes").value }); await exportData(true); }
       catch(error) { message(error.message); }
     };
+    // A impressão usa uma folha própria (print-report.js), não a tela do sistema.
     document.getElementById("print").onclick = () => {
-      let printedNotes=document.getElementById("printed-notes");
-      if(!printedNotes){printedNotes=document.createElement("p");printedNotes.id="printed-notes";document.getElementById("notes").closest("label").after(printedNotes);}
-      printedNotes.textContent=document.getElementById("notes").value || "Nenhuma observação registrada pelo profissional.";
-      document.body.classList.toggle("include-technical", !!document.getElementById("print-technical")?.checked);
-      const prior = [...document.querySelectorAll("#result-panel details")].map(el => [el, el.open]);
-      if (document.body.classList.contains("include-technical")) {
-        for (const [el] of prior) el.open = true;
-      }
-      for(const el of document.querySelectorAll(".quality-reasons")) el.open=true;
-      window.addEventListener("afterprint", () => { for (const [el, open] of prior) el.open = open; document.body.classList.remove("include-technical"); }, { once: true });
-      window.print();
+      const s = state();
+      if (!s?.report) return;
+      const aluno = readStudents().find(v => String(v.id) === String(s.participant?.id));
+      printReport(s, aluno, document.getElementById("notes").value).catch(error => message(error.message));
     };
     timeline = bindTimeline(exportData);
     window.addEventListener("beforeunload", (event) => {
